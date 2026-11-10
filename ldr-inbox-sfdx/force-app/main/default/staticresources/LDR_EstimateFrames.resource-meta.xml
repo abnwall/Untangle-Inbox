@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
+    <cacheControl>Public</cacheControl>
+    <contentType>application/zip</contentType>
+    <description>Frame type images (Aluminum, Aluminum Clad, Wood) from the nanawall.com estimator, used by the LDR Inbox Estimate tab.</description>
+</StaticResource>

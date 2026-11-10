@@ -1,0 +1,2123 @@
+<template>
+    <div class="ldr-shell">
+        <!-- hidden host for formatted copy (draft email details, FETR) -->
+        <div class="ldr-copy-host" lwc:dom="manual"></div>
+        <!-- CONVERT LEAD: the Convert Lead - LDR screen flow runs in a window over the inbox; once the Lead is converted
+             the inbox's own Files step replaces the flow's summary screen (canvas #129) -->
+        <template lwc:if={hasConvertFlow}>
+            <!-- v6g2: a click on the dark area outside any popup does what its Close / Cancel / × does (overlayClick) -->
+            <div class="ldr-overlay" data-close="closeConvertFlow" onmousedown={overlayDown} onclick={overlayClick}>
+                <div class="ldr-dialog ldr-dialog-flow" role="dialog" aria-label="Convert Lead">
+                    <div class="ldr-flow-head">
+                        <div>
+                            <div class="ldr-dialog-title">Convert Lead:&nbsp;{convertState.name}</div>
+                            <div class="ldr-small ldr-muted">Account › Contact › Project › Files</div>
+                        </div>
+                        <button class="ldr-dialog-close" onclick={closeConvertFlow} aria-label="Close">×</button>
+                    </div>
+                    <template lwc:if={convertIsFlow}>
+                        <lightning-flow flow-api-name="Convert_Lead" flow-input-variables={convertFlowInputs}
+                            onstatuschange={handleConvertFlowStatus}></lightning-flow>
+                        <div class="ldr-small ldr-muted ldr-flow-foot">Doesn't load?&nbsp;<a href={convertFlowUrl} target="_blank" rel="noopener">Open the Convert Lead flow in a new tab.</a></div>
+                    </template>
+                    <template lwc:if={convertIsFiles}>
+                        <div class="ldr-cv-title">{convertState.name} is converted</div>
+                        <div class="ldr-cv-text">Contact, Project and Opportunity are created. Add any files for the rep, then <strong>Open Contact</strong> to keep working on {convertState.firstName} here in the inbox.</div>
+                        <!-- canvas #150: the new Contact's Lead Funnel Status (set to Qualified while blank) -->
+                        <template lwc:if={convertState.qualifyNote}>
+                            <div class="ldr-cv-text">{convertState.qualifyNote}</div>
+                        </template>
+                        <template lwc:if={convertState.qualifyError}>
+                            <div class="ldr-small ldr-error-text">{convertState.qualifyError}</div>
+                        </template>
+                        <div class="ldr-cv-label">Opportunity Files · {convertState.opportunityName}</div>
+                        <!-- #161: the form's files with Download + previews (no automatic attach: Aqil, 2026-10-30) -->
+                        <c-ldr-form-files files={convertState.fileLinks}
+                            note="From the form submission. Download each one, then add it with Upload Files below."></c-ldr-form-files>
+                        <div class="ldr-cv-upload">
+                            <lightning-file-upload label="Upload Files" name="oppFiles" record-id={convertState.opportunityId} multiple
+                                onuploadfinished={handleConvertUpload}></lightning-file-upload>
+                        </div>
+                        <template lwc:if={convertHasUploads}>
+                            <div class="ldr-cv-text">Added: {convertUploadsText}</div>
+                        </template>
+                        <!-- the person's KBMax quotes from the last year: checking one joins it to the new Opportunity -->
+                        <c-ldr-kbmax-link lead-id={convertState.leadId} contact-id={convertState.contactId}
+                            opportunity-id={convertState.opportunityId}></c-ldr-kbmax-link>
+                        <div class="ldr-cv-foot">
+                            <button class="ldr-cv-done" onclick={finishConversion}>{convertDoneLabel}</button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+        <!-- ATTACH TO OPPORTUNITY (canvas #119): the Contact: New Opportunity screen flow in a window over the inbox; when
+             it finishes, a Files step like Convert's (form files, Upload Files, KBMax quotes) on the new Opportunity -->
+        <template lwc:if={hasAttachOppFlow}>
+            <div class="ldr-overlay" data-close="closeAttachOpp" onmousedown={overlayDown} onclick={overlayClick}>
+                <div class="ldr-dialog ldr-dialog-flow ldr-dialog-attach" role="dialog" aria-label="Attach to Opportunity">
+                    <div class="ldr-flow-head">
+                        <div class="ldr-dialog-title">Attach to Opportunity:&nbsp;{active.name}</div>
+                        <button class="ldr-dialog-close" onclick={closeAttachOpp} aria-label="Close">×</button>
+                    </div>
+                    <template lwc:if={attachOppIsFlow}>
+                        <lightning-flow flow-api-name="Contact_New_Opportunity" flow-input-variables={attachOppInputs}
+                            onstatuschange={handleAttachOppStatus}></lightning-flow>
+                    </template>
+                    <template lwc:if={attachOppIsFiles}>
+                        <div class="ldr-cv-title">Opportunity created</div>
+                        <div class="ldr-cv-text">Add any files for the rep, then <strong>Done</strong>.</div>
+                        <div class="ldr-cv-label">Opportunity Files · {attachOpp.opportunityName}</div>
+                        <c-ldr-form-files files={attachOpp.fileLinks}
+                            note="From the form submission. Download each one, then add it with Upload Files below."></c-ldr-form-files>
+                        <div class="ldr-cv-upload">
+                            <lightning-file-upload label="Upload Files" name="attachOppFiles" record-id={attachOpp.opportunityId} multiple
+                                onuploadfinished={handleAttachOppUpload}></lightning-file-upload>
+                        </div>
+                        <template lwc:if={attachOppHasUploads}>
+                            <div class="ldr-cv-text">Added: {attachOppUploadsText}</div>
+                        </template>
+                        <c-ldr-kbmax-link contact-id={attachOpp.contactId} opportunity-id={attachOpp.opportunityId}></c-ldr-kbmax-link>
+                        <div class="ldr-cv-foot">
+                            <button class="ldr-cv-done" onclick={closeAttachOpp}>Done</button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+        <!-- LINK TO EXISTING LEAD / CONTACT (in-page; replaces the record edit page) -->
+        <template lwc:if={hasLinkDialog}>
+            <div class="ldr-overlay" data-close="closeLinkDialog" onmousedown={overlayDown} onclick={overlayClick}>
+                <div class="ldr-dialog ldr-dialog-link" role="dialog" aria-label="Link to existing Lead or Contact">
+                    <div class="ldr-flow-head">
+                        <div>
+                            <div class="ldr-dialog-title">Link&nbsp;{active.name}&nbsp;to an existing record</div>
+                            <div class="ldr-small ldr-muted">{linkSubline}</div>
+                        </div>
+                        <button class="ldr-dialog-close" onclick={closeLinkDialog} aria-label="Close">×</button>
+                    </div>
+                    <div class="ldr-link-body">
+                        <template lwc:if={hasLinkSuggestions}>
+                            <div>
+                                <div class="ldr-link-label">Suggested matches</div>
+                                <template for:each={linkSuggestions} for:item="sg">
+                                    <button key={sg.key} class="ldr-link-sugg" data-id={sg.id} onclick={pickLinkSuggestion}>
+                                        <span><span class={sg.kindCls}>{sg.kind}</span>&nbsp;<strong>{sg.name}</strong>&nbsp;<span class="ldr-small ldr-muted">· {sg.sub}</span></span>
+                                        <span class="ldr-link-why">{sg.why} · Use</span>
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+                        <!-- #160: the inbox's own Lead / Contact search (name, email, phone 4+ digits, company / account, zip;
+                             up to 5). ▸ shows a result's details; clicking the name picks it; Show More Results opens
+                             Advanced Search. Only this middle part scrolls; each list caps at 300px. -->
+                        <template for:each={linkSections} for:item="ls">
+                            <div key={ls.kind} class="ldr-link-section">
+                                <div class="ldr-link-sec-label">{ls.label}</div>
+                                <template lwc:if={ls.hasSel}>
+                                    <div class={ls.selCls}>
+                                        <span><strong>{ls.selName}</strong>&nbsp;<span class="ldr-small ldr-muted">· {ls.selSub}</span></span>
+                                        <button class="ldr-dismiss-plain" data-kind={ls.kind} onclick={clearLinkSel} aria-label={ls.clearLabel} title={ls.clearLabel}>×</button>
+                                    </div>
+                                </template>
+                                <template lwc:else>
+                                    <input class="ldr-link-input" type="text" data-kind={ls.kind} value={ls.q} oninput={handleLinkQuery}
+                                        placeholder={ls.placeholder} aria-label={ls.ariaLabel} />
+                                    <template lwc:if={ls.showMore}>
+                                        <div class="ldr-link-results">
+                                            <button class="ldr-link-more" data-kind={ls.kind} onclick={openLinkAdv}><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00798F" stroke-width="2.4"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>{ls.moreLabel}</button>
+                                            <template for:each={ls.rows} for:item="lr">
+                                                <div key={lr.id} class="ldr-link-res">
+                                                    <div class="ldr-link-res-line">
+                                                        <button class="ldr-link-chev" data-id={lr.id} onclick={toggleLinkDetails} aria-label={lr.toggleTitle} title={lr.toggleTitle} aria-expanded={lr.expanded}>{lr.chevron}</button>
+                                                        <button class="ldr-link-res-name" data-kind={ls.kind} data-id={lr.id} onclick={pickLinkResult}><strong>{lr.name}</strong>&nbsp;<span class="ldr-small ldr-muted">· {lr.sub}</span></button>
+                                                    </div>
+                                                    <template lwc:if={lr.isOpen}>
+                                                        <div class="ldr-link-details">
+                                                            <template for:each={lr.details} for:item="dt">
+                                                                <div key={dt.k} class="ldr-min0"><span class="ldr-link-dk">{dt.k}</span>{dt.v}</div>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <template lwc:if={ls.noRows}>
+                                                <div class="ldr-small ldr-muted ldr-link-none">{ls.noRowsText}</div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </template>
+                                <template lwc:if={ls.hint}>
+                                    <div class="ldr-small ldr-muted ldr-link-hint">{ls.hint}</div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="ldr-btn-row ldr-link-foot">
+                        <button class="ldr-btn" onclick={closeLinkDialog}>Cancel</button>
+                        <button class="ldr-btn ldr-btn-primary" onclick={saveLinkRecord} disabled={linkCantSave}>Link</button>
+                    </div>
+                </div>
+            </div>
+            <!-- #160 ADVANCED SEARCH (like Salesforce's "Show more results" on a lookup): over the link window, up to 50
+                 matches with the details needed to pick the right record; Select picks it for the link -->
+            <template lwc:if={hasLinkAdv}>
+                <div class="ldr-overlay ldr-overlay-top" data-close="closeLinkAdv" onmousedown={overlayDown} onclick={overlayClick}>
+                    <div class="ldr-dialog ldr-dialog-adv" role="dialog" aria-label="Advanced Search">
+                        <div class="ldr-flow-head">
+                            <div class="ldr-dialog-title">Advanced Search: {linkAdvView.title}</div>
+                            <button class="ldr-dialog-close" onclick={closeLinkAdv} aria-label="Close">×</button>
+                        </div>
+                        <div class="ldr-adv-search">
+                            <input class="ldr-link-input" type="text" value={linkAdvView.q} oninput={handleLinkAdvQuery}
+                                placeholder={linkAdvView.placeholder} aria-label="Search" />
+                            <span class="ldr-small ldr-muted ldr-nowrap">{linkAdvView.countText}</span>
+                        </div>
+                        <template lwc:if={linkAdvView.error}>
+                            <div class="ldr-small ldr-error-text ldr-adv-error">{linkAdvView.error}</div>
+                        </template>
+                        <div class="ldr-adv-body">
+                            <div class="ldr-adv-table">
+                                <div class="ldr-adv-row ldr-adv-headrow">
+                                    <template for:each={linkAdvView.heads} for:item="hd">
+                                        <span key={hd.key}>{hd.h}</span>
+                                    </template>
+                                </div>
+                                <template lwc:if={linkAdvView.noRows}>
+                                    <div class="ldr-adv-none">No matches. Try a name, email, phone, company or zip.</div>
+                                </template>
+                                <template for:each={linkAdvView.rows} for:item="ar">
+                                    <div key={ar.id} class="ldr-adv-row">
+                                        <button class="ldr-status-btn ldr-adv-select" data-kind={ar.kind} data-id={ar.id} onclick={pickLinkResult}>Select</button>
+                                        <template for:each={ar.cells} for:item="cl">
+                                            <span key={cl.key} class="ldr-min0">{cl.v}</span>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="ldr-adv-foot">
+                            <span class="ldr-small ldr-muted">Searches Name, Email, Phone, Company / Account and Zip. Select picks the record for the link.</span>
+                            <button class="ldr-btn" onclick={closeLinkAdv}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </template>
+        <!-- FIXED LINKS (safety net, admins): submissions whose Lead / Contact links were fixed on load -->
+        <template lwc:if={showRelinkList}>
+            <div class="ldr-overlay" data-close="closeRelinkList" onmousedown={overlayDown} onclick={overlayClick}>
+                <div class="ldr-dialog ldr-dialog-link" role="dialog" aria-label="Fixed submission links">
+                    <div class="ldr-flow-head">
+                        <div>
+                            <div class="ldr-dialog-title">Fixed submission links ({relinkCount})</div>
+                            <div class="ldr-small ldr-muted">Click a name to open it in the inbox. × marks it as reviewed and takes it off this list and the notice. The tags go in the record's Comments field (form submissions and instant estimates).</div>
+                        </div>
+                        <div class="ldr-btn-row">
+                            <template lwc:if={relinkHasRows}>
+                                <button class="ldr-pill-btn" onclick={clearAllRelinks} disabled={busy} title="Mark every submission on this list as reviewed (#FixReviewed)">Clear All</button>
+                            </template>
+                            <button class="ldr-dialog-close" onclick={closeRelinkList} aria-label="Close">×</button>
+                        </div>
+                    </div>
+                    <div class="ldr-link-body">
+                        <template lwc:if={relinkListEmpty}>
+                            <div class="ldr-muted">Nothing left to review.</div>
+                        </template>
+                        <template for:each={relinkRows} for:item="rr">
+                            <div key={rr.key} class="ldr-relink-row">
+                                <div class="ldr-grow">
+                                    <button class="ldr-link-btn ldr-link-teal ldr-relink-name" data-id={rr.id} onclick={openRelinkRow}>{rr.name}</button>&nbsp;<span class={rr.formCls}>{rr.form}</span>
+                                    <div class="ldr-small ldr-muted">{rr.what} · {rr.where} · tagged in {rr.field}</div>
+                                </div>
+                                <button class="ldr-dismiss-plain ldr-relink-x" data-id={rr.id} onclick={ackRelink} title="Mark as reviewed" aria-label="Mark as reviewed" disabled={busy}>×</button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <!-- canvas #146: UNCONTACTED CLAIMED LEADS (claimed 24h+ ago, no email from the claimer) -->
+        <template lwc:if={uncontactedOpen}>
+            <div class="ldr-overlay" data-close="closeUncontacted" onmousedown={overlayDown} onclick={overlayClick}>
+                <div class="ldr-dialog ldr-dialog-link" role="dialog" aria-label="Uncontacted claimed leads and contacts">
+                    <div class="ldr-flow-head">
+                        <div>
+                            <div class="ldr-dialog-title">Uncontacted Claimed Leads &amp; Contacts ({uncontactedCount})</div>
+                            <div class="ldr-small ldr-muted">Click a name to open it in the inbox. × indicates an email is not needed and removes it from this list and the notice.</div>
+                        </div>
+                        <button class="ldr-dialog-close" onclick={closeUncontacted} aria-label="Close">×</button>
+                    </div>
+                    <div class="ldr-link-body">
+                        <template lwc:if={uncontactedListEmpty}>
+                            <div class="ldr-muted">Nothing left. Every Lead or Contact you claimed has an email from you.</div>
+                        </template>
+                        <template for:each={uncontactedRows} for:item="ur">
+                            <div key={ur.key} class={ur.cls}>
+                                <div class="ldr-grow">
+                                    <button class="ldr-link-btn ldr-link-teal ldr-relink-name" data-id={ur.id} onclick={openUncontactedRow}>{ur.name}</button>&nbsp;<span class={ur.formCls}>{ur.form}</span>&nbsp;<span class="ldr-unc-kind">{ur.kind}</span>
+                                    <div class="ldr-small ldr-muted">{ur.sub}</div>
+                                </div>
+                                <template lwc:if={canAckUncontacted}>
+                                    <button class="ldr-dismiss-plain ldr-relink-x" data-person={ur.personId} onclick={ackUncontacted} title="Email not needed (#NoContactNeeded)" aria-label="Email not needed" disabled={busy}>×</button>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <!-- IMAGE LIGHTBOX: click an attachment thumbnail to see it larger -->
+        <template lwc:if={hasLightbox}>
+            <div class="ldr-lightbox" onclick={closeLightbox} onkeydown={handleLightboxKey} tabindex="0" role="dialog" aria-label="Image preview">
+                <template lwc:if={hasMultipleLightboxImages}>
+                    <button class="ldr-lightbox-nav ldr-lightbox-prev" onclick={prevLightbox} aria-label="Previous image">‹</button>
+                    <button class="ldr-lightbox-nav ldr-lightbox-next" onclick={nextLightbox} aria-label="Next image">›</button>
+                </template>
+                <template lwc:if={lightboxIsImage}>
+                    <img class="ldr-lightbox-img" src={lightboxUrl} alt={lightboxLabel} onclick={stopLightboxClick}/>
+                </template>
+                <template lwc:else>
+                    <div class="ldr-lightbox-placeholder" onclick={stopLightboxClick}>
+                        <div class="ldr-lightbox-ph-title">{lightboxLabel}</div>
+                        <div class="ldr-small">{lightboxSub}</div>
+                    </div>
+                </template>
+                <div class="ldr-lightbox-label">{lightboxLabel}</div>
+                <template lwc:if={lightboxSub}>
+                    <div class="ldr-lightbox-pos">{lightboxSub}</div>
+                </template>
+                <template lwc:if={hasMultipleLightboxImages}>
+                    <div class="ldr-lightbox-pos">{lightboxPosition}. Use ‹ › or the arrow keys to browse this submission's images</div>
+                </template>
+                <button class="ldr-lightbox-close" onclick={closeLightbox} aria-label="Close">✕</button>
+            </div>
+        </template>
+        <!-- CONFIRM: Reassign / Claim from a teammate -->
+        <template lwc:if={hasConfirm}>
+            <div class="ldr-overlay" data-close="confirmNo" onmousedown={overlayDown} onclick={overlayClick}>
+                <div class="ldr-dialog" role="dialog" aria-label="Confirm">
+                    <div class="ldr-dialog-text">{confirm.text}</div>
+                    <div class="ldr-dialog-btns">
+                        <button class="ldr-btn" onclick={confirmNo}>No</button>
+                        <button class="ldr-btn ldr-btn-primary" onclick={confirmYes} disabled={busy}>Yes</button>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <!-- ACTIVITY PREVIEW: in-page, like the image lightbox -->
+        <template lwc:if={hasActivityPreview}>
+            <div class="ldr-overlay" data-close="closeActivityPreview" onmousedown={overlayDown} onclick={overlayClick}>
+                <div class="ldr-dialog ldr-dialog-wide" role="dialog" aria-label="Activity preview">
+                    <button class="ldr-dialog-close" onclick={closeActivityPreview} aria-label="Close">×</button>
+                    <div class="ldr-fact-k">{activityPreview.kind}</div>
+                    <div class="ldr-dialog-title">{activityPreview.subject}</div>
+                    <div class="ldr-muted ldr-small">{activityPreview.who} · {activityPreview.when}</div>
+                    <div class="ldr-dialog-body">{activityPreview.body}</div>
+                    <button class="ldr-link-btn ldr-link-teal" onclick={openActivityRecord}>Open the Full Record in Salesforce ↗</button>
+                </div>
+            </div>
+        </template>
+        <!-- HEADER -->
+        <div class="ldr-topbar">
+            <div class="ldr-brand">
+                <svg width="124" height="27.4" viewBox="0 0 163 36" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NanaWall" class="ldr-logo">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M0 34.011H3.68334V11.9904L25.8608 35.2262V4.46687H22.178V26.2922L0 3.05646V34.011Z" fill="#231F20"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M44.6963 24.8424C44.6963 21.2769 42.5412 18.2593 38.74 18.2593C35.0961 18.2593 32.9411 21.4332 32.9411 24.8424C32.9411 28.2914 35.0177 31.5038 38.74 31.5038C42.5797 31.5038 44.6963 28.4478 44.6963 24.8424V24.8424ZM48.0266 34.011H44.5V31.1507H44.4221C43.0112 33.2279 40.8167 34.6393 38.1917 34.6393C32.588 34.6393 29.4141 29.9756 29.4141 24.725C29.4141 19.7096 32.7453 15.1248 38.0743 15.1248C40.7772 15.1248 42.9718 16.5352 44.4221 18.7293H44.5V15.6742H48.0266V34.011Z" fill="#231F20"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M56.2096 18.1417H56.288C57.3853 16.1829 59.5798 15.1251 61.8128 15.1251C66.9859 15.1251 68.318 18.6127 68.318 23.0791V34.0113H64.7909V23.5107C64.7909 20.3752 64.3604 18.2596 60.755 18.2596C56.2096 18.2596 56.2096 22.2566 56.2096 25.5868V34.0113H52.6836V15.6745H56.2096V18.1417Z" fill="#231F20"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M150.162 34.0111H153.688V0H150.162V34.0111Z" fill="#231F20"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M158.414 34.0111H161.94V0H158.414V34.0111Z" fill="#231F20"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M86.6548 24.8424C86.6548 21.2769 84.4992 18.2593 80.699 18.2593C77.0546 18.2593 74.9001 21.4332 74.9001 24.8424C74.9001 28.2914 76.9757 31.5038 80.699 31.5038C84.5387 31.5038 86.6548 28.4478 86.6548 24.8424V24.8424ZM89.985 34.011H86.459V31.1507H86.3801C84.9697 33.2279 82.7757 34.6393 80.1506 34.6393C74.5465 34.6393 71.373 29.9756 71.373 24.725C71.373 19.7096 74.7038 15.1248 80.0328 15.1248C82.7367 15.1248 84.9307 16.5352 86.3801 18.7293H86.459V15.6742H89.985V34.011Z" fill="#231F20"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M101.261 25.6266L109.607 3.83923L117.953 25.6266L126.222 4.46652H130.219L117.953 35.1878L109.607 13.5193L101.261 35.1878L88.9961 4.46652H92.9931L101.261 25.6266Z" fill="#231F20"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M142.263 24.8424C142.263 21.2769 140.107 18.2593 136.306 18.2593C132.662 18.2593 130.507 21.4332 130.507 24.8424C130.507 28.2914 132.584 31.5038 136.306 31.5038C140.146 31.5038 142.263 28.4478 142.263 24.8424V24.8424ZM145.593 34.011H142.066V31.1507H141.988C140.578 33.2279 138.383 34.6393 135.758 34.6393C130.154 34.6393 126.98 29.9756 126.98 24.725C126.98 19.7096 130.311 15.1248 135.64 15.1248C138.344 15.1248 140.538 16.5352 141.988 18.7293H142.066V15.6742H145.593V34.011Z" fill="#231F20"/></svg>
+                <!-- canvas #135: the inbox's own tabs live in the top bar (LDR Inbox / Dashboard / Lead Views / Estimate;
+                     Boss View: LDR Inbox / All Submissions / Dashboard / 6Sense Dashboard) -->
+                <nav class="ldr-top-tabs" aria-label="LDR Inbox pages">
+                    <template for:each={topTabs} for:item="tt">
+                        <button key={tt.key} class={tt.cls} data-key={tt.key} aria-current={tt.current} onclick={handleTopTab}>{tt.label}</button>
+                    </template>
+                </nav>
+            </div>
+            <div class="ldr-topbar-right">
+                <span class="ldr-pill">Signed in as&nbsp;<strong>{meName}</strong>
+                    <template lwc:if={isAdmin}>
+                        <span class="ldr-viewas">&nbsp;· View as&nbsp;</span>
+                        <select class="ldr-viewas-select" aria-label="View as" title="Only shown to admins" onchange={handleViewAs}>
+                            <template for:each={viewAsOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                    </template>
+                </span>
+                <!-- the deployed version, for the admins (Aqil, Aziz; Boss View is theirs too) -->
+                <template lwc:if={isAdmin}>
+                    <span class="ldr-version" title="LDR Inbox version">{appVersion}</span>
+                </template>
+                <span class="ldr-pill ldr-pill-live">Updated {loadedAtLabel}</span>
+                <lightning-button-icon icon-name="utility:refresh" alternative-text="Refresh" title="Refresh"
+                    onclick={handleRefresh} disabled={busy}></lightning-button-icon>
+            </div>
+        </div>
+
+        <template lwc:if={showRelinkNotice}>
+            <div class="ldr-relink-notice">
+                <span>🔗 Fixed links on&nbsp;<strong>{relinkCount}</strong>&nbsp;submission(s): {relinkDetail}. (Safety net until the conversion fix is in.)&nbsp;<button class="ldr-link-btn ldr-link-teal" onclick={openRelinkList}>View All</button></span>
+                <button class="ldr-dismiss-plain" onclick={dismissRelinkNotice} aria-label="Dismiss">×</button>
+            </div>
+        </template>
+        <!-- canvas #156, one-time move (admins): shown only while old tags / claim dates are left; gone once it has run -->
+        <!-- v5.7: every banner has a ×; these page-level ones stay closed until the page is reloaded (topVisible) -->
+        <template lwc:if={topVisible.legacyMove}>
+            <div class="ldr-relink-notice ldr-dismissable ldr-bar-x">
+                <span>One-time move: {legacyMoveText}&nbsp;<button class="ldr-link-btn ldr-link-teal" onclick={runLegacyMove} disabled={busy}>Move Now</button></span>
+                <button class="ldr-dismiss" data-key="legacyMove" onclick={dismissTop} aria-label="Dismiss this alert" title="Dismiss">×</button>
+            </div>
+        </template>
+        <!-- canvas #146: claimed Leads / Contacts with no email after 24 hours (every LDR; only when there are some) -->
+        <template lwc:if={topVisible.uncontacted}>
+            <div class="ldr-unc-notice ldr-dismissable ldr-bar-x" role="alert">
+                <span class="ldr-unc-icon" aria-hidden="true">⚠</span>
+                <span>You have&nbsp;<strong>{uncontactedCount}</strong>&nbsp;{uncontactedNoun} with no email after 24 hours.&nbsp;<button class="ldr-link-btn ldr-unc-link" onclick={openUncontacted}>View All</button></span>
+                <button class="ldr-dismiss" data-key="uncontacted" onclick={dismissTop} aria-label="Dismiss this alert" title="Dismiss">×</button>
+            </div>
+        </template>
+        <template lwc:if={topVisible.boss}>
+            <div class="ldr-boss-banner ldr-dismissable ldr-bar-x"><strong>Boss View:</strong>&nbsp;You literally have all the power. Like you can do whatever you want. Want to edit and save unclaimed leads? You don't have to claim them like everyone else! They're all gonna be so jealous!
+                <button class="ldr-dismiss" data-key="boss" onclick={dismissTop} aria-label="Dismiss this alert" title="Dismiss">×</button></div>
+        </template>
+        <template lwc:if={topVisible.viewAs}>
+            <div class="ldr-viewas-banner ldr-dismissable ldr-bar-x">Viewing the inbox as&nbsp;<strong>{viewerName}</strong>. Their tabs and flags are shown; anything you save or claim is done as you ({meName}).
+                <button class="ldr-dismiss" data-key="viewAs" onclick={dismissTop} aria-label="Dismiss this alert" title="Dismiss">×</button></div>
+        </template>
+        <template lwc:if={topVisible.linkFix}>
+            <div class="ldr-banner ldr-banner-warn ldr-banner-top ldr-dismissable">Link safety net:&nbsp;{linkFixError} (Only admins see this.)
+                <button class="ldr-dismiss" data-key="linkFix" onclick={dismissTop} aria-label="Dismiss this alert" title="Dismiss">×</button></div>
+        </template>
+        <template lwc:if={topVisible.estimateError}>
+            <div class="ldr-banner ldr-banner-error ldr-banner-top ldr-dismissable">Instant estimates couldn't be loaded:&nbsp;{estimateError} (Only admins see this.)
+                <button class="ldr-dismiss" data-key="estimateError" onclick={dismissTop} aria-label="Dismiss this alert" title="Dismiss">×</button></div>
+        </template>
+        <template lwc:if={topVisible.estimatesOff}>
+            <div class="ldr-banner ldr-banner-warn ldr-banner-top ldr-dismissable">Instant estimates aren't in the queue yet: Website_Instant_Estimate__c needs Claimed_By__c (Lookup User) and ClaimedDate__c in this org. (Only admins see this.)
+                <button class="ldr-dismiss" data-key="estimatesOff" onclick={dismissTop} aria-label="Dismiss this alert" title="Dismiss">×</button></div>
+        </template>
+
+        <!-- TABS: Unclaimed / Mine / Post Quote / Prospects on the left, Finished / All on the right.
+             Boss View > All Submissions (canvas f123 / notes #89C, #90): the tab row holds the date filters and the stats line. -->
+        <template lwc:if={showInboxTabs}>
+        <template lwc:if={isBossAllSubs}>
+            <div class="ldr-allsubs-bar">
+                <div class="ldr-allsubs-dates">
+                    <span class="ldr-allsubs-label">Submitted</span>
+                    <template for:each={allSubsPresets} for:item="pr">
+                        <button key={pr.key} class={pr.cls} data-key={pr.key} onclick={handleAllSubsPreset}>{pr.label}</button>
+                    </template>
+                    <input type="date" class="ldr-date ldr-allsubs-date ldr-allsubs-from" value={allSubsView.from} onchange={handleAllSubsFrom} aria-label="From date">
+                    <span class="ldr-small ldr-muted">to</span>
+                    <input type="date" class="ldr-date ldr-allsubs-date" value={allSubsView.to} onchange={handleAllSubsTo} aria-label="To date">
+                </div>
+                <div class="ldr-allsubs-stats">{allSubsView.periodLabel} · {allSubsView.total} total · {allSubsView.claimed} claimed · <span class="ldr-allsubs-unclaimed">{allSubsView.unclaimed} unclaimed</span><template for:each={allSubsView.statusParts} for:item="sp"><span key={sp.key}> · {sp.count} {sp.label}</span></template></div>
+            </div>
+        </template>
+        <template lwc:else>
+        <div class="ldr-tabbar">
+            <div class="ldr-tabs ldr-tabs-left">
+                <template for:each={tabsLeft} for:item="t">
+                    <button key={t.key} class={t.cls} data-key={t.key} onclick={handleTab}>
+                        {t.label}&nbsp;<span class={t.countCls}>{t.count}</span>
+                    </button>
+                </template>
+            </div>
+            <!-- canvas #144 / #145A: search any Lead or Contact in Salesforce, centred in the tab bar (button or Enter) -->
+            <div class="ldr-sp-box">
+                <input class="ldr-sp-input" type="text" placeholder="Search Salesforce by email…"
+                    aria-label="Search Salesforce Leads and Contacts by email" title="Finds any Lead or Contact in Salesforce, including ones not in the inbox"
+                    value={spText} oninput={handleSpText} onkeydown={handleSpKey} />
+                <button class="ldr-sp-btn" onclick={runSfSearch}>Search</button>
+            </div>
+            <template lwc:if={sp.open}>
+                <div class="ldr-sp-panel">
+                    <div class="ldr-sp-title-row">
+                        <div class="ldr-sp-title">Salesforce search: “{sp.query}”</div>
+                        <button class="ldr-sp-close" onclick={closeSfSearch} aria-label="Close search results" title="Close">×</button>
+                    </div>
+                    <div class="ldr-sp-mode">{sp.modeLine}</div>
+                    <template lwc:if={sp.hasInbox}>
+                        <div class="ldr-sp-head">In the inbox <span class="ldr-sp-count">· {sp.inboxCount}</span></div>
+                        <template for:each={sp.inbox} for:item="si">
+                            <button key={si.key} class={si.cls} data-id={si.id} data-tab={si.tab} data-list={si.list} data-pqf={si.pqf} data-box={si.ssBox} onclick={handleSpInbox}>
+                                <div class="ldr-xt-top"><div class="ldr-xt-name">{si.name}</div><span class="ldr-xt-tag">{si.tabTag}</span></div>
+                                <div class="ldr-xt-email">{si.email}</div>
+                                <div class="ldr-xt-sub">{si.sub}</div>
+                            </button>
+                        </template>
+                    </template>
+                    <div class="ldr-sp-head ldr-sp-head-sf">In Salesforce, not in the inbox <span class="ldr-sp-count">· {sp.sfCount}</span></div>
+                    <template lwc:if={sp.loading}>
+                        <div class="ldr-sp-loading"><lightning-spinner alternative-text="Searching Salesforce" size="small"></lightning-spinner></div>
+                    </template>
+                    <template lwc:if={sp.error}><div class="ldr-small ldr-error-text">{sp.error}</div></template>
+                    <template lwc:if={sp.noSf}><div class="ldr-sp-none">{sp.noSfText}</div></template>
+                    <template for:each={sp.sf} for:item="r">
+                        <div key={r.key} class={r.cls}>
+                            <div class="ldr-sp-card-main">
+                                <div class="ldr-sp-tags">
+                                    <span class="ldr-sp-name">{r.name}</span>
+                                    <span class="ldr-sp-kind">{r.kind}</span>
+                                    <span class={r.typeCls}>{r.customerType}</span>
+                                    <span class="ldr-sp-status">{r.status}</span>
+                                </div>
+                                <div class="ldr-sp-line ldr-sp-wrap">{r.email} · {r.phone}</div>
+                                <div class="ldr-sp-line">
+                                    <template lwc:if={r.hasAccountLink}>
+                                        <button class="ldr-link-btn ldr-account-link" data-id={r.accountId} data-kind="Account" onclick={openSpRecord}>{r.company}</button>
+                                    </template>
+                                    <template lwc:else><strong class="ldr-sp-ink">{r.company}</strong></template>
+                                    <span>&nbsp;· {r.location} · Rep:&nbsp;</span><strong class="ldr-sp-ink">{r.rep}</strong>
+                                </div>
+                                <div class="ldr-sp-line">Project Coordinator: <strong class={r.coordCls}>{r.coordinator}</strong> · Created {r.created} · Last activity {r.lastActivity}</div>
+                                <template lwc:if={r.hasOpp}><div class="ldr-sp-opp-row"><span class="ldr-sp-opp">{r.oppLabel}</span></div></template>
+                                <div class="ldr-sp-why">Not in the inbox: {r.why}</div>
+                            </div>
+                            <button class="ldr-sp-open" data-id={r.id} data-kind={r.kind} onclick={openSpRecord}>Open in Salesforce ↗</button>
+                        </div>
+                    </template>
+                    <div class="ldr-sp-foot">{sp.footnote}</div>
+                </div>
+            </template>
+            <!-- v6f3: the Post Quote filter moved to the list column (it widened this group by ~180px and pushed Finished /
+                 All out of the inbox on narrower screens) -->
+            <div class="ldr-tabs ldr-tabs-right">
+                <template for:each={tabsRight} for:item="t">
+                    <button key={t.key} class={t.cls} data-key={t.key} onclick={handleTab}>
+                        {t.label}&nbsp;<span class={t.countCls}>{t.count}</span>
+                    </button>
+                </template>
+            </div>
+        </div>
+        </template>
+        </template>
+
+        <!-- v5.7: inbox admins (Aqil, Aziz) only -->
+        <template lwc:if={topVisible.hiddenFields}>
+            <div class="ldr-banner ldr-banner-warn ldr-banner-top ldr-dismissable">Some fields are hidden by your field permissions and show as blank:
+                {hiddenFieldsLabel}. The LDR profile needs read access to them. (Only admins see this.)
+                <button class="ldr-dismiss" data-key="hiddenFields" onclick={dismissTop} aria-label="Dismiss this alert" title="Dismiss">×</button></div>
+        </template>
+        <template lwc:if={topVisible.loadError}>
+            <div class="ldr-banner ldr-banner-error ldr-dismissable">Could not load the queue: {loadError}
+                <button class="ldr-dismiss" data-key="loadError" onclick={dismissTop} aria-label="Dismiss this alert" title="Dismiss">×</button></div>
+        </template>
+
+        <template lwc:if={isBossDash}>
+            <c-ldr-dashboard inbox={dashboardInbox}></c-ldr-dashboard>
+        </template>
+        <template lwc:elseif={isBossAudit}>
+            <c-ldr-claim-audit></c-ldr-claim-audit>
+        </template>
+        <template lwc:elseif={isBossSix}>
+            <c-ldr-dashboard mode="six"></c-ldr-dashboard>
+        </template>
+        <template lwc:elseif={isMyDash}>
+            <c-ldr-dashboard mode="my" user-id={viewerId} actions={myActions} inbox={myInbox} onopenrow={handleOpenRow}></c-ldr-dashboard>
+        </template>
+        <template lwc:elseif={isEstimateTab}>
+            <c-ldr-estimate></c-ldr-estimate>
+        </template>
+        <template lwc:elseif={isLeadViewsTab}>
+            <c-ldr-lead-views></c-ldr-lead-views>
+        </template>
+        <!-- 6SENSE (canvas #151, #152 A): admins only; its own list + page. The inbox loads the replies (also for the
+             tab count and the searches) and reloads them when a status is saved there. -->
+        <template lwc:elseif={isSixSenseTab}>
+            <c-ldr-six-sense viewer-id={viewerId} data={ssData} loading={ssLoading} error={ssError} focus={ssFocus}
+                onsixsensechanged={handleSixSenseChanged}></c-ldr-six-sense>
+        </template>
+        <template lwc:else>
+        <div class="ldr-body">
+            <!-- QUEUE LIST -->
+            <div class="ldr-queue">
+                <!-- BOSS VIEW: ALL SUBMISSIONS (date range) -->
+                <template lwc:if={isBossAllSubs}>
+                    <!-- canvas f123 (#89C, #90): Record / Type / Status, then Project Coordinator + Form, then search + Date -->
+                    <div class="ldr-filter-row">
+                        <select class="ldr-sort-select ldr-filter" aria-label="Lead or Contact" title="Lead or Contact" onchange={handleRecordFilter}>
+                            <template for:each={recordFilterOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                        <select class="ldr-sort-select ldr-filter" aria-label="Type" title="Lead Type__c / Contact Lead Type" onchange={handleRecTypeFilter}>
+                            <template for:each={recTypeFilterOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                        <select class="ldr-sort-select ldr-filter" aria-label="Status" title="Lead Status / Contact Lead Funnel Status" onchange={handleStatusFilter}>
+                            <template for:each={statusFilterOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                    </div>
+                    <div class="ldr-filter-row">
+                        <select class="ldr-sort-select ldr-filter" aria-label="Filter by Project Coordinator" title="Project Coordinator on the Lead / Contact" onchange={handleAllSubsCoordFilter}>
+                            <template for:each={allSubsCoordOptions} for:item="co">
+                                <option key={co.value} value={co.value} selected={co.selected}>{co.label}</option>
+                            </template>
+                        </select>
+                        <select class="ldr-sort-select ldr-filter" aria-label="Form" title="Type of form submission" onchange={handleFormFilter}>
+                            <template for:each={formFilterOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                    </div>
+                    <div class="ldr-search-row">
+                        <!-- canvas #128: an active search is highlighted, with × to clear it -->
+                        <input class={searchCls} type="text" placeholder="Search name or email…" aria-label="Search name or email"
+                            title={searchTitle} value={searchQuery} oninput={handleSearch} />
+                        <template lwc:if={hasSearch}>
+                            <button class="ldr-search-clear" onclick={clearSearch} aria-label="Clear search" title="Clear search">×</button>
+                        </template>
+                        <button class="ldr-sort-btn" onclick={toggleSortOrder} title={sortTitle} aria-label={sortTitle}>Date&nbsp;<span class="ldr-sort-arrow">{sortArrow}</span></button>
+                    </div>
+                    <template lwc:if={allSubsLoading}>
+                        <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                    </template>
+                    <template lwc:if={allSubsError}>
+                        <div class="ldr-small ldr-error-text">{allSubsError}</div>
+                    </template>
+                    <template lwc:if={allSubsView.empty}>
+                        <div class="ldr-empty">No submissions match this date range and these filters.</div>
+                    </template>
+                    <template for:each={allSubsView.rows} for:item="ar">
+                        <button key={ar.key} class={ar.cls} data-id={ar.id} onclick={handleAllSub}>
+                            <div class="ldr-row-top">
+                                <span class="ldr-row-name">{ar.name}</span>
+                                <span class="ldr-small ldr-muted">{ar.date}</span>
+                            </div>
+                            <div class="ldr-row-tags">
+                                <span class={ar.formCls}>{ar.form}</span>
+                                <span class="ldr-tag ldr-tag-plain">{ar.customerType}</span>
+                                <span class="ldr-tag ldr-tag-plain">{ar.record}</span>
+                                <span class={ar.claimCls}>{ar.claimTag}</span>
+                                <span class="ldr-tag ldr-tag-plain">{ar.coordTag}</span>
+                                <span class="ldr-tag ldr-tag-plain">{ar.statusTag}</span>
+                            </div>
+                        </button>
+                    </template>
+                </template>
+                <template lwc:else>
+                <!-- PROSPECTS: list switch + blurb -->
+                <template lwc:if={isProspectsTab}>
+                    <div class="ldr-plist-row">
+                        <template for:each={prospectLists} for:item="pl">
+                            <button key={pl.key} class={pl.cls} data-key={pl.key} onclick={handleProspectList}>{pl.label}&nbsp;<span class="ldr-plist-count">{pl.count}</span></button>
+                        </template>
+                    </div>
+                    <template lwc:if={showProspectError}>
+                        <div class="ldr-small ldr-error-text">Some prospects couldn't be loaded: {prospectError}</div>
+                    </template>
+                    <div class="ldr-filter-row">
+                        <select class="ldr-sort-select ldr-filter" aria-label="Project Coordinator" title="Project Coordinator on the Lead / Contact" onchange={handleProspectCoordFilter}>
+                            <template for:each={prospectCoordOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                        <select class="ldr-sort-select ldr-filter" aria-label="Type" title="Lead Type__c / Contact Lead Type" onchange={handleRecTypeFilter}>
+                            <template for:each={recTypeFilterOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                        <select class="ldr-sort-select ldr-filter" aria-label="Status" title="Lead Status / Contact Lead Funnel Status" onchange={handleStatusFilter}>
+                            <template for:each={statusFilterOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                    </div>
+                </template>
+                <!-- canvas #148 (v6f1 order): Unclaimed / All = Coordinator, then Record · Type, then Form · Status · Date; Mine /
+                     Finished the same without Coordinator. No list search on these four tabs (the tab bar's Salesforce search
+                     finds records in any tab). -->
+                <template lwc:if={showQueueFilters}>
+                <!-- #163: Mine and All: Sequence Status on its own row above Record / Type / Form (was a button bar above the list) -->
+                <template lwc:if={showSeqButtons}>
+                    <div class="ldr-filter-row">
+                        <select class="ldr-sort-select ldr-filter" aria-label="Sequence Status" title="Outreach sequence status" onchange={handleSeq}>
+                            <template for:each={seqOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                    </div>
+                </template>
+                <!-- v6f1 (Aqil): Coordinator on its own line (Unclaimed / All), then Lead or Contact · Type, then Form · Status ·
+                     Date (Form was on the Lead or Contact line, Coordinator on the Status line) -->
+                <template lwc:if={isTeamTab}>
+                    <div class="ldr-filter-row">
+                        <select class="ldr-sort-select ldr-filter" aria-label="Filter by Coordinator" title="Who claimed it" onchange={handleCoordinatorFilter}>
+                            <template for:each={teamCoordinatorOptions} for:item="co">
+                                <option key={co.value} value={co.value} selected={co.selected}>{co.label}</option>
+                            </template>
+                        </select>
+                    </div>
+                </template>
+                <template lwc:if={isUnclaimedTab}>
+                    <div class="ldr-filter-row">
+                        <select class="ldr-sort-select ldr-filter" aria-label="Filter by Coordinator" title="Project Coordinator on the Lead / Contact" onchange={handleUnclaimedCoordFilter}>
+                            <template for:each={unclaimedCoordOptions} for:item="co">
+                                <option key={co.value} value={co.value} selected={co.selected}>{co.label}</option>
+                            </template>
+                        </select>
+                    </div>
+                </template>
+                <div class="ldr-filter-row">
+                    <select class="ldr-sort-select ldr-filter" aria-label="Lead or Contact" title="Lead or Contact" onchange={handleRecordFilter}>
+                        <template for:each={recordFilterOptions} for:item="o">
+                            <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                        </template>
+                    </select>
+                    <select class="ldr-sort-select ldr-filter" aria-label="Type" title="Lead Type__c / Contact Lead Type" onchange={handleRecTypeFilter}>
+                        <template for:each={recTypeFilterOptions} for:item="o">
+                            <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                        </template>
+                    </select>
+                </div>
+                <div class="ldr-filter-row">
+                    <select class="ldr-sort-select ldr-filter" aria-label="Form" title="Type of form submission" onchange={handleFormFilter}>
+                        <template for:each={formFilterOptions} for:item="o">
+                            <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                        </template>
+                    </select>
+                    <select class="ldr-sort-select ldr-filter" aria-label="Status" title="Lead Status / Contact Lead Funnel Status" onchange={handleStatusFilter}>
+                        <template for:each={statusFilterOptions} for:item="o">
+                            <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                        </template>
+                    </select>
+                    <button class="ldr-sort-btn" onclick={toggleSortOrder} title={sortTitle} aria-label={sortTitle}>Date&nbsp;<span class="ldr-sort-arrow">{sortArrow}</span></button>
+                </div>
+                </template>
+                <!-- canvas #139 / v6f3: Post Quote filter, first in the list column like the other tabs' filters (was in the
+                     tab bar before Finished / All) -->
+                <template lwc:if={isPostQuoteTab}>
+                    <div class="ldr-filter-row">
+                        <select class="ldr-sort-select ldr-filter" aria-label="Post Quote filter" onchange={handlePqFilter}>
+                            <template for:each={pqFilterOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                    </div>
+                </template>
+                <template lwc:if={showListSearch}>
+                <div class="ldr-search-row">
+                    <!-- canvas #128: an active search is highlighted, with × to clear it -->
+                    <input class={searchCls} type="text" placeholder="Search name or email…" aria-label="Search name or email"
+                        title={searchTitle} value={searchQuery} oninput={handleSearch} />
+                    <template lwc:if={hasSearch}>
+                        <button class="ldr-search-clear" onclick={clearSearch} aria-label="Clear search" title="Clear search">×</button>
+                    </template>
+                    <template lwc:if={showStandardList}>
+                        <button class="ldr-sort-btn" onclick={toggleSortOrder} title={sortTitle} aria-label={sortTitle}>Date&nbsp;<span class="ldr-sort-arrow">{sortArrow}</span></button>
+                    </template>
+                    <template lwc:else>
+                        <button class="ldr-sort-btn" onclick={toggleProspectSort} title={prospectSortTitle} aria-label={prospectSortTitle}>Date&nbsp;<span class="ldr-sort-arrow">{prospectSortArrow}</span></button>
+                        <button class="ldr-sort-btn" onclick={refreshProspects} title="Reload prospects" aria-label="Reload prospects" disabled={prospectsLoading}>↻</button>
+                    </template>
+                </div>
+                </template>
+                <template lwc:if={loading}>
+                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                </template>
+                <template lwc:if={prospectsLoading}>
+                    <lightning-spinner alternative-text="Loading prospects" size="small"></lightning-spinner>
+                </template>
+                <!-- PROSPECTS LIST: tier headers, cards, hidden-by-rules footer -->
+                <template lwc:if={isProspectsTab}>
+                    <template lwc:if={prospectListEmpty}>
+                        <div class="ldr-empty">{listEmptyText}</div>
+                    </template>
+                    <template for:each={prospectItems} for:item="pi">
+                        <div key={pi.key}>
+                            <template lwc:if={pi.isHeader}>
+                                <div class={pi.cls}>
+                                    <div class="ldr-tier-head-line">
+                                        <span class="ldr-tier-label">{pi.label}&nbsp;<span class="ldr-tier-count">· {pi.count}</span></span>
+                                        <template lwc:if={pi.hasToggle}>
+                                            <button class="ldr-pill-btn" data-tier={pi.tier} onclick={handleTierToggle}>{pi.toggleLabel}</button>
+                                        </template>
+                                    </div>
+                                    <div class="ldr-tier-hint">{pi.hint}</div>
+                                </div>
+                            </template>
+                            <template lwc:if={pi.isCard}>
+                                <div class={pi.cls} data-id={pi.id} onclick={handleProspectCard} onkeydown={handleProspectCardKey} role="button" tabindex="0">
+                                    <div class="ldr-row-top">
+                                        <span class="ldr-row-name"><c-ldr-type-icon type={pi.customerType} title={pi.customerType} class="ldr-type-icon"></c-ldr-type-icon>{pi.name}</span>
+                                        <span class="ldr-age ldr-age-plain">{pi.ageLabel}</span>
+                                    </div>
+                                    <div class="ldr-small ldr-muted">{pi.subLine}</div>
+                                    <div class="ldr-chip-row">
+                                        <template for:each={pi.chips} for:item="c">
+                                            <span key={c.key} class={c.cls}>{c.text}</span>
+                                        </template>
+                                    </div>
+                                    <div class="ldr-pcard-summary">{pi.summaryLine}</div>
+                                    <template lwc:if={pi.hasCe}>
+                                        <div class={pi.ceCls}><span class={pi.ceTagCls} style={pi.ceTagStyle}>{pi.ceLabel}</span><div class="ldr-ce-sub">{pi.ceSub}</div></div>
+                                    </template>
+                                    <div class="ldr-pcard-actions">
+                                        <template lwc:if={pi.hasPhone}>
+                                            <a class="ldr-pcard-phone" href={pi.telHref} onclick={stopProp}><svg class="ldr-phone-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"></path></svg>{pi.phoneShown}</a>
+                                        </template>
+                                        <span class="ldr-grow"></span>
+                                        <button class="ldr-btn ldr-btn-small ldr-btn-primary" data-id={pi.id} onclick={claimProspect} disabled={pi.claimDisabled} title={pi.claimTitle}>{pi.claimWord}</button>
+                                    </div>
+                                </div>
+                            </template>
+                            <template lwc:if={pi.isSummary}>
+                                <div class="ldr-hidden-summary">
+                                    {pi.text}
+                                    <template lwc:if={pi.cappedNote}>&nbsp;{pi.cappedNote}</template>
+                                    <div class="ldr-hidden-actions">
+                                        <template lwc:if={pi.hasHidden}>
+                                            <button class="ldr-pill-btn" onclick={toggleHiddenProspects}>{pi.hiddenToggleLabel}</button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            <template lwc:if={pi.isHiddenRow}>
+                                <button class="ldr-hidden-row" data-id={pi.id} onclick={handleHiddenProspect}>
+                                    <span class="ldr-strong">{pi.name}</span>
+                                    <span>{pi.reason}</span>
+                                </button>
+                            </template>
+                        </div>
+                    </template>
+                </template>
+                <template lwc:else>
+                <template lwc:if={isPostQuoteTab}>
+                    <div class="ldr-small ldr-muted ldr-pq-blurb">{pqBlurb}</div>
+                    <template lwc:if={pqError}>
+                        <div class="ldr-small ldr-error-text">{pqError}</div>
+                    </template>
+                    <template lwc:if={pqLoading}>
+                        <lightning-spinner alternative-text="Loading Post Quote replies" size="small"></lightning-spinner>
+                    </template>
+                </template>
+                <template lwc:if={listEmpty}>
+                    <div class="ldr-empty">{listEmptyText}</div>
+                </template>
+                <template for:each={visible} for:item="l">
+                    <div key={l.id}>
+                    <template lwc:if={l.isSectionHeader}>
+                        <!-- canvas #126: Mine sections (New, then Working), like the Prospects tiers -->
+                        <div class={l.sectionCls}><span class="ldr-tier-label">{l.sectionLabel}&nbsp;<span class="ldr-tier-count">· {l.sectionCount}</span></span></div>
+                    </template>
+                    <template lwc:elseif={l.isChild}>
+                        <!-- another submission from the same person, indented under the group's newest -->
+                        <button class={l.childCls} data-id={l.id} onclick={handleRow}>
+                            <div class="ldr-row-top">
+                                <span class={l.formCls}>{l.childLabel}</span>
+                                <span class={l.ageCls}>{l.ageLabel}</span>
+                            </div>
+                            <template lwc:if={l.hasChildPreview}>
+                                <div class="ldr-child-preview">{l.childPreview}</div>
+                            </template>
+                            <template lwc:if={l.showClaimLabel}>
+                                <div class="ldr-row-claim ldr-small">{l.claimLabel}</div>
+                            </template>
+                        </button>
+                    </template>
+                    <template lwc:elseif={l.isPqCard}>
+                        <!-- canvas #139 / #140: Post Quote reply card (Post Quote tab, and the Finished / All tail) -->
+                        <button class={l.rowCls} data-id={l.id} onclick={handlePqCard}>
+                            <div class="ldr-row-top ldr-card-top">
+                                <span class="ldr-row-name"><c-ldr-type-icon type={l.customerType} title={l.customerType} class="ldr-type-icon"></c-ldr-type-icon>{l.name}</span>
+                                <span class="ldr-age">{l.ageLabel}</span>
+                            </div>
+                            <div class="ldr-card-line">
+                                <span class="ldr-tag ldr-tag-pq">Post Quote</span>
+                                <template lwc:if={l.typeIsText}>
+                                    <span class="ldr-type-text">Unknown</span>
+                                </template>
+                                <template lwc:if={l.hasTypeTag}>
+                                    <span class={l.typeCls}>{l.customerType}</span>
+                                </template>
+                            </div>
+                            <div class="ldr-pq-project">{l.project}</div>
+                            <div class="ldr-card-line">
+                                <template lwc:if={l.isDone}>
+                                    <span class="ldr-tag ldr-tag-pq-done">{l.doneLabel}</span>
+                                </template>
+                                <template lwc:if={l.hasGeneralApp}>
+                                    <span class="ldr-tag ldr-tag-genapp" title="Project General Application">{l.generalApp}</span>
+                                </template>
+                                <span class={l.stageCls}>{l.stage}</span>
+                                <template lwc:if={l.hasKind}>
+                                    <span class="ldr-tag ldr-pq-stage-closed">{l.kind}</span>
+                                </template>
+                            </div>
+                            <div class="ldr-card-claim">
+                                <div class="ldr-row-bottom-right"><span class={l.coordCls}>{l.coordLabel}</span></div>
+                            </div>
+                            <template lwc:if={l.hasMore}>
+                                <div class="ldr-group-foot"><span class="ldr-group-pill">{l.moreLabel}</span></div>
+                            </template>
+                        </button>
+                    </template>
+                    <template lwc:elseif={l.isPqChild}>
+                        <!-- an earlier reply from the same person on the same project; opens the card above -->
+                        <button class="ldr-row-child" data-id={l.parentKey} onclick={handlePqChild}>
+                            <div class="ldr-row-top">
+                                <span class="ldr-tag ldr-tag-pq">Email</span>
+                                <span class="ldr-age">{l.childDate}</span>
+                            </div>
+                            <div class="ldr-pq-child-subject">{l.childSubject}</div>
+                            <div class="ldr-child-preview">{l.childPreview}</div>
+                        </button>
+                    </template>
+                    <template lwc:else>
+                    <button class={l.rowCls} data-id={l.id} data-group={l.groupKey} onclick={handleRowOrGroup}>
+                        <div class="ldr-row-top ldr-card-top">
+                            <span class="ldr-row-name"><c-ldr-type-icon type={l.customerType} title={l.customerType} class="ldr-type-icon"></c-ldr-type-icon>{l.name}</span>
+                            <span class={l.ageCls}>{l.ageLabel}</span>
+                        </div>
+                        <!-- canvas #125 card order: claimed-still-New / form + customer type / other flags / claimer + coordinator / group pill -->
+                        <template lwc:if={l.showNeedsStatusFlag}>
+                            <div class="ldr-card-line"><span class="ldr-tag ldr-tag-needs">● Claimed, still New</span></div>
+                        </template>
+                        <div class="ldr-card-line">
+                            <span class={l.formCls}>{l.formLabel}</span>
+                            <template lwc:if={l.typeIsText}>
+                                <span class="ldr-type-text">{l.customerType}</span>
+                            </template>
+                            <template lwc:if={l.hasTypeTag}>
+                                <span class={l.typeCls}>{l.customerType}</span>
+                            </template>
+                        </div>
+                        <template lwc:if={l.hasMidFlags}>
+                            <div class="ldr-card-line">
+                                <template lwc:if={l.showOutbound}>
+                                    <span class="ldr-tag ldr-tag-outbound">Outbound</span>
+                                </template>
+                                <template lwc:if={l.hasRelated}>
+                                    <span class="ldr-tag ldr-tag-related">{l.relatedLabel}</span>
+                                </template>
+                                <template lwc:if={l.hasCampaign}>
+                                    <span class={l.campaignCls}>{l.campaignLabel}</span>
+                                </template>
+                                <template lwc:if={l.showOpenOppFlag}>
+                                    <span class="ldr-tag ldr-tag-openopp" title={l.openOppTitle}>{l.openOppLabel}</span>
+                                </template>
+                                <template lwc:if={l.isJunk}>
+                                    <span class="ldr-tag ldr-tag-junk">Junk · {l.junkLabel}</span>
+                                </template>
+                                <template lwc:if={l.showNoOutreach}>
+                                    <span class="ldr-tag ldr-tag-alert">{l.noOutreachLabel}</span>
+                                </template>
+                                <template lwc:if={l.showStaleNurtureFlag}>
+                                    <span class="ldr-tag ldr-tag-info">↻ Was {l.leadStatus}</span>
+                                </template>
+                                <template lwc:if={l.showAssignedFlag}>
+                                    <span class="ldr-tag ldr-tag-assigned">→ Assigned by {l.assignedByShort}</span>
+                                </template>
+                            </div>
+                        </template>
+                        <template lwc:if={l.hasBottomRight}>
+                            <div class="ldr-card-claim">
+                                <div class="ldr-row-bottom-right">
+                                    <template lwc:if={l.showClaimLabel}>
+                                        <span class="ldr-row-claim">{l.claimLabel}</span>
+                                    </template>
+                                    <template lwc:if={l.showCoordFlag}>
+                                        <span class="ldr-tag ldr-tag-coord">{l.coordFlagLabel}</span>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                        <template lwc:if={l.isGroupHead}>
+                            <div class="ldr-group-foot"><span class="ldr-group-pill">{l.groupLabel}</span></div>
+                        </template>
+                    </button>
+                    </template>
+                    </div>
+                </template>
+                </template>
+                <!-- canvas #143: search matches in other tabs (or in this tab, hidden by a filter) -->
+                <template lwc:if={crossTab.has}>
+                    <div class="ldr-xt-head">In other tabs <span class="ldr-xt-count">· {crossTab.count}</span></div>
+                    <div class="ldr-xt-hint">Matches for “{crossTab.query}” outside this list. Click one to open it in its tab.</div>
+                    <template for:each={crossTab.items} for:item="x">
+                        <button key={x.key} class={x.cls} data-id={x.id} data-tab={x.tab} data-list={x.prospectList} data-pqf={x.pqFilter} data-box={x.ssBox} onclick={handleCrossTab}>
+                            <div class="ldr-xt-top">
+                                <div class="ldr-xt-name">{x.name}</div>
+                                <span class="ldr-xt-tag">{x.tabTag}</span>
+                            </div>
+                            <div class="ldr-xt-email">{x.email}</div>
+                            <div class="ldr-xt-sub">{x.sub}</div>
+                        </button>
+                    </template>
+                    <template lwc:if={crossTab.more}>
+                        <button class="ldr-xt-more" onclick={showAllCrossTab}>{crossTab.moreLabel}</button>
+                    </template>
+                </template>
+                </template>
+            </div>
+
+            <!-- DETAIL -->
+            <template lwc:if={hasActive}>
+                <div class="ldr-detail">
+                    <!-- DETAIL HEADER (canvas #157 / #158; v6e layout). Top row: icon + name, then the buttons in all the space
+                         beside it, right-aligned. Buttons that don't fit there move to the right end of the row below, beside
+                         line 1 (which is then at most 70% wide), so lines 1 and 2 aren't pushed down. headerSplit (measured in
+                         renderedCallback and when the header resizes) is how many fit on top. Line 2 is full width with Current
+                         Tab · Go to <Tab> on its right. Lines are 24px, wrap, and use line 1's text style (12.5px #707070, #158).
+                         #161: the alerts, then the status-button line, come after it. -->
+                    <div class="ldr-d-header ldr-d-head157">
+                        <div class="ldr-d-hrow ldr-d-hrow-top">
+                            <div class="ldr-d-titlerow">
+                                <template lwc:if={active.notYetLinked}>
+                                    <div class="ldr-unlinked-icon" title="Not yet in CRM">
+                                        <lightning-icon icon-name="utility:clock" alternative-text="Not yet in CRM" size="small"></lightning-icon>
+                                    </div>
+                                </template>
+                                <template lwc:else>
+                                    <lightning-icon icon-name={active.recordIcon} alternative-text={active.recordIconAlt}
+                                        title={active.recordIconAlt} size="medium" class="ldr-record-icon"></lightning-icon>
+                                </template>
+                                <span class="ldr-d-name">{active.name}</span>
+                            </div>
+                            <div class="ldr-d-actions ldr-d-actions-top">
+                                <template for:each={headerButtonsTop} for:item="b">
+                                    <template lwc:if={b.isBadge}><span key={b.key} class={b.cls} data-hb={b.idx}>{b.label}</span></template>
+                                    <template lwc:elseif={b.href}><a key={b.key} class={b.cls} href={b.href} data-hb={b.idx}>{b.label}</a></template>
+                                    <template lwc:else><button key={b.key} class={b.cls} data-hb={b.idx} data-action={b.action} onclick={handleHeaderButton}
+                                        disabled={b.disabled} title={b.title}>{b.label}</button></template>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="ldr-d-info">
+                            <template lwc:if={active.linkMismatch}>
+                                <div class="ldr-d-line ldr-error-text"><strong>Linked to a different {active.recordIconAlt}: {active.linkedLeadName}</strong></div>
+                            </template>
+                            <!-- line 1: [Inquiry Type] Submitted / Claimed (#156 B) · email · phone, and the buttons that didn't fit
+                                 on the top row -->
+                            <div class={headerMidRowCls}>
+                                <div class="ldr-d-line ldr-d-line1">
+                                    <span class={active.formCls} title="Inquiry Type">{active.formLabel}</span>{active.headerWhen} · {active.contactLine}
+                                </div>
+                                <template lwc:if={hasHeaderButtonsBottom}>
+                                    <div class="ldr-d-actions ldr-d-actions-bottom">
+                                        <template for:each={headerButtonsBottom} for:item="b">
+                                            <template lwc:if={b.isBadge}><span key={b.key} class={b.cls} data-hb={b.idx}>{b.label}</span></template>
+                                            <template lwc:elseif={b.href}><a key={b.key} class={b.cls} href={b.href} data-hb={b.idx}>{b.label}</a></template>
+                                            <template lwc:else><button key={b.key} class={b.cls} data-hb={b.idx} data-action={b.action} onclick={handleHeaderButton}
+                                                disabled={b.disabled} title={b.title}>{b.label}</button></template>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                            <!-- line 2: [Customer Type] account · location · Rep (+ note, #152 C / #153 B) | Current Tab · Go to <Tab>
+                                 (v6d: Current Tab was on line 1) -->
+                            <div class="ldr-d-line ldr-d-line2">
+                                <span class="ldr-d-line-right ldr-current-tab">Current Tab: <strong>{active.currentTab}</strong><template lwc:if={active.showGoTab}>&nbsp;·&nbsp;<button class="ldr-go-tab" onclick={goToActiveTab} title="Switch the list to the tab this record is in">{active.goTabLabel}</button></template></span>
+                                <span class={active.typePillCls} title={active.customerType}><c-ldr-type-icon type={active.customerType} class="ldr-type-icon"></c-ldr-type-icon>{active.customerType}</span>
+                                <template lwc:if={active.hasAccountLink}>
+                                    <button class="ldr-link-btn ldr-account-link" onclick={openContactAccount}>{active.accountLine}</button>
+                                </template>
+                                <template lwc:else>
+                                    <strong class="ldr-d-ink">{active.accountLine}</strong>
+                                </template>
+                                <span>&nbsp;· {active.locationLine} · Rep:&nbsp;</span><strong class={active.repCls}>{active.repDisplay}</strong>
+                                <template lwc:if={active.hasRepNote}>
+                                    <span class={active.repNoteCls} title={active.repRuleTitle}><template lwc:if={active.repNoteUndetermined}>(<em>Undetermined</em>&nbsp;</template>{active.repNote}</span>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- QUICK EDIT (canvas #137 / #138): name, email, phone (+ Company on Leads) and the mailing address with
+                         Address Search, on the linked Lead or Contact through Lightning Data Service. Nothing is written until
+                         Save; Cancel discards. #152 G: a centred popup (Save or Cancel closes it). -->
+                    <template lwc:if={quickEditOpen}>
+                        <template lwc:if={active.hasLinkedRecord}>
+                            <div class="ldr-overlay" data-close="cancelQuickEdit" onmousedown={overlayDown} onclick={overlayClick}>
+                            <div class="ldr-dialog ldr-dialog-pop ldr-dialog-qe" role="dialog" aria-label="Quick Edit">
+                            <div class="ldr-pop-title">Quick Edit · {active.name}</div>
+                            <div class="ldr-quick-edit">
+                                <template for:each={active.formKeys} for:item="fk">
+                                    <lightning-record-edit-form key={fk} class="ldr-qe-form" record-id={active.recordId} object-api-name={active.recordObject}
+                                        onload={handleQuickEditLoad} onsubmit={handleQuickEditSubmit} onsuccess={handleQuickEditSuccess} onerror={handleQuickEditError}>
+                                        <lightning-messages></lightning-messages>
+                                        <!-- v5.6b / v5.6c: line 1 First Name | Last Name | Type | Company, line 2 Email | Phone |
+                                             Matched Account Type | Reporting Matched Account. Contacts have no Company or Matched
+                                             Account fields; their Type is Lead Type. -->
+                                        <div class="ldr-qe-row1">
+                                            <lightning-input-field field-name="FirstName" variant="label-stacked"></lightning-input-field>
+                                            <lightning-input-field field-name="LastName" variant="label-stacked"></lightning-input-field>
+                                            <template lwc:if={active.isLeadLinked}>
+                                                <lightning-input-field field-name="Type__c" variant="label-stacked"></lightning-input-field>
+                                                <lightning-input-field field-name="Company" variant="label-stacked"></lightning-input-field>
+                                            </template>
+                                            <template lwc:else>
+                                                <lightning-input-field field-name="LeadType__c" variant="label-stacked"></lightning-input-field>
+                                            </template>
+                                        </div>
+                                        <div class="ldr-qe-row1">
+                                            <lightning-input-field field-name="Email" variant="label-stacked"></lightning-input-field>
+                                            <lightning-input-field field-name="Phone" variant="label-stacked"></lightning-input-field>
+                                            <template lwc:if={active.isLeadLinked}>
+                                                <lightning-input-field field-name="Matched_Account_Type__c" variant="label-stacked"></lightning-input-field>
+                                                <lightning-input-field field-name="LeanData__Reporting_Matched_Account__c" variant="label-stacked"></lightning-input-field>
+                                            </template>
+                                        </div>
+                                        <!-- Mailing Address: the Lead page's own Address Search (Google Places through Salesforce Maps) -->
+                                        <lightning-input-address class="ldr-qe-address" address-label="Mailing Address"
+                                            address-lookup-label="Address Search" address-lookup-placeholder="Search Address"
+                                            country-label="Mailing Country" street-label="Mailing Street" city-label="Mailing City"
+                                            province-label="Mailing State/Province" postal-code-label="Mailing Zip/Postal Code"
+                                            street={qeAddr.street} city={qeAddr.city} province={qeAddr.province} postal-code={qeAddr.postalCode}
+                                            country={qeAddr.country} country-options={leadCountryOptions} province-options={qeStateOptions}
+                                            show-address-lookup onchange={handleQuickEditAddress}></lightning-input-address>
+                                        <!-- hidden: so the form's load carries the saved address into the draft above -->
+                                        <div class="ldr-hidden">
+                                            <template lwc:if={active.isLeadLinked}>
+                                                <lightning-input-field field-name="CountryCode"></lightning-input-field>
+                                                <lightning-input-field field-name="StateCode"></lightning-input-field>
+                                                <lightning-input-field field-name="Street"></lightning-input-field>
+                                                <lightning-input-field field-name="City"></lightning-input-field>
+                                                <lightning-input-field field-name="PostalCode"></lightning-input-field>
+                                            </template>
+                                            <template lwc:else>
+                                                <lightning-input-field field-name="MailingCountryCode"></lightning-input-field>
+                                                <lightning-input-field field-name="MailingStateCode"></lightning-input-field>
+                                                <lightning-input-field field-name="MailingStreet"></lightning-input-field>
+                                                <lightning-input-field field-name="MailingCity"></lightning-input-field>
+                                                <lightning-input-field field-name="MailingPostalCode"></lightning-input-field>
+                                            </template>
+                                        </div>
+                                        <div class="ldr-qe-actions">
+                                            <template lwc:if={qeError}><span class="ldr-qe-error">{qeError}</span></template>
+                                            <button class="ldr-btn ldr-btn-small" type="button" onclick={cancelQuickEdit}>Cancel</button>
+                                            <button class="ldr-btn ldr-btn-primary ldr-btn-small" type="submit" disabled={qeSaving}>Save</button>
+                                        </div>
+                                    </lightning-record-edit-form>
+                                </template>
+                            </div>
+                            </div>
+                            </div>
+                        </template>
+                    </template>
+
+                    <!-- DRAFT EMAIL (#152 G / H, #155 B / C): a centred popup. Title line: Draft Email + the three copy actions,
+                         Close on the right; template buttons on the line below. Only the message is editable; the details
+                         are added as they are. Reopening starts fresh. -->
+                    <template lwc:if={showEmailPreview}>
+                        <div class="ldr-overlay" data-close="closeEmailPreview" onmousedown={overlayDown} onclick={overlayClick}>
+                        <div class="ldr-dialog ldr-dialog-pop ldr-email-preview" role="dialog" aria-label="Draft Email">
+                            <div class="ldr-preview-head">
+                                <div class="ldr-email-title-row">
+                                    <div class="ldr-card-title">Draft Email</div>
+                                </div>
+                                <button class="ldr-link-btn ldr-email-close" onclick={closeEmailPreview}>Close</button>
+                            </div>
+                            <!-- v6g3 (Aqil): the submission at a glance, under the title; Questions or Comments on one line ("…") -->
+                            <div class="ldr-muted ldr-small ldr-email-info"><strong>Submission Details</strong>:&nbsp;<template for:each={active.emailSubItems} for:item="it"><span key={it.key}><template lwc:if={it.sep}>&nbsp;·&nbsp;</template><strong>{it.k}</strong>:&nbsp;{it.v}</span></template></div>
+                            <div class="ldr-muted ldr-small ldr-email-info ldr-email-qc" title={active.emailQcTitle}><strong>Questions or Comments</strong>:&nbsp;{active.emailQc}</div>
+                            <!-- v6g3: the email on the left (scrolls when there isn't room), the message templates on the right, one
+                                 per line (canvas aabc #96B / #97 / #98: click toggles, another one switches) -->
+                            <div class="ldr-email-cols">
+                            <div class="ldr-preview-body">
+                                <div><strong>To:</strong>&nbsp;{active.email}</div>
+                                <div><strong>Bcc:</strong>&nbsp;{active.ldrBcc}</div>
+                                <!-- v6g3: the subject can be edited; the mail-app links use it -->
+                                <div class="ldr-email-subject-row"><strong>Subject:</strong>
+                                    <input class="ldr-email-subject" type="text" value={active.emailSubject} oninput={handleEmailSubject} aria-label="Email subject">
+                                </div>
+                                <div class="ldr-email-details">
+                                    <!-- v6g4: no "Message · edit it before copying" label (Aqil) -->
+                                    <div class="ldr-email-msg-head">
+                                        <template lwc:if={active.emailMessageEdited}>
+                                            <button class="ldr-email-undo" onclick={undoEmailEdits}>Undo Edits</button>
+                                        </template>
+                                    </div>
+                                    <textarea class="ldr-email-msg" rows={active.emailMessageRows} aria-label="Email message" data-text={active.emailMessageText} oninput={handleEmailMessage}
+                                        placeholder="Write your message here (optional). It goes above the details. Left blank, the copy starts with blank lines instead."></textarea>
+                                    <div class="ldr-email-msg-hint">Words between *asterisks* are bold in the copy; lines starting with "- " are bullets.</div>
+                                    <template lwc:if={active.hasEmailExtras}>
+                                        <template for:each={active.emailExtras} for:item="x">
+                                            <div key={x.key} class="ldr-email-extra">{x.before}<a href={x.url} target="_blank" rel="noopener">{x.linkText}</a>{x.after}</div>
+                                        </template>
+                                    </template>
+                                    <div class="ldr-email-rows">
+                                        <template for:each={active.emailRows} for:item="er">
+                                            <div key={er.k} class="ldr-email-row">
+                                                <div class="ldr-email-k">{er.k}</div>
+                                                <div class="ldr-email-v">{er.v}</div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ldr-email-tpl-col">
+                                <template for:each={active.emailTplButtons} for:item="tb">
+                                    <button key={tb.kind} class={tb.cls} data-kind={tb.kind} onclick={pickEmailTemplate} title={tb.title}>{tb.label}</button>
+                                </template>
+                            </div>
+                            </div>
+                            <!-- v6g3: the copy actions back at the bottom (were beside the title) -->
+                            <div class="ldr-email-actions">
+                                <a class="ldr-status-btn ldr-email-act" href={active.mailtoNoBodyHref} onclick={copyEmailAndOpen}>Copy Details &amp; Open Mail App</a>
+                                <button class="ldr-status-btn ldr-email-act" onclick={copyEmailOnly}>Copy Details Only</button>
+                                <a class="ldr-email-plain" href={active.mailtoHref}>Open Mail App with Plain Text Instead</a>
+                            </div>
+                            <template lwc:if={emailCopiedOk}>
+                                <div class="ldr-small ldr-strong ldr-ok-text">{active.emailCopiedText}</div>
+                            </template>
+                            <template lwc:if={emailCopyFailed}>
+                                <div class="ldr-small ldr-strong ldr-error-text">Couldn't copy automatically here. Select the details above and copy them (Ctrl+C).</div>
+                            </template>
+                            <div class="ldr-muted ldr-small">{active.emailHintText}</div>
+                        </div>
+                        </div>
+                    </template>
+
+                    <!-- #161: every alert sits between the header and the status-button line; the group renders only when one
+                         is showing (10px above it, 10px from the last banner to the status line) -->
+                    <template lwc:if={detailHasAlerts}>
+                    <div class="ldr-d-alerts">
+                    <template lwc:if={active.noOutreachVisible}>
+                        <div class="ldr-banner ldr-banner-warn ldr-dismissable">
+                            <button class="ldr-dismiss" data-key="noOutreach" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button>
+                            <strong>⏱ No outreach logged.</strong>&nbsp;{active.noOutreachText}
+                        </div>
+                    </template>
+                    <template lwc:if={conflictVisible}>
+                        <div class="ldr-banner ldr-banner-error ldr-banner-flex ldr-dismissable">
+                            <button class="ldr-dismiss" data-key="conflict" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button>
+                            <span><strong>{conflictMsg}</strong>&nbsp;{conflictNote}</span>
+                            <button class="ldr-btn ldr-btn-small ldr-btn-conflict-ok" onclick={dismissConflict}>OK</button>
+                        </div>
+                    </template>
+
+                    <template lwc:if={active.convertedAfterVisible}>
+                        <div class="ldr-banner ldr-banner-converted ldr-dismissable">
+                            <button class="ldr-dismiss" data-key="convertedAfter" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button>
+                            <div class="ldr-converted-title">This contact was converted after their {active.submissionNoun}</div>
+                            <div class="ldr-small">{active.convertedAfterDetail}</div>
+                        </div>
+                    </template>
+
+                    <template lwc:if={active.coordWarningVisible}>
+                        <div class="ldr-banner ldr-banner-warn ldr-dismissable">
+                            <button class="ldr-dismiss" data-key="coordWarning" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button>
+                            <!-- v6f8: Aqil's wording -->
+                            <div class="ldr-banner-text">⚠ This submission is unclaimed, but the Project Coordinator is&nbsp;<strong>{active.coordinatorName}</strong>&nbsp;from a previous submission. Claiming will take it over from them. If it's recent you can assign it to them instead (they aren't notified so let them know).</div>
+                            <div class="ldr-btn-row">
+                                <button class="ldr-btn ldr-btn-small ldr-btn-green-outline" onclick={assignToCoordinator} disabled={busy}>Assign this submission to {active.coordinatorName}</button>
+                                <button class="ldr-btn ldr-btn-small ldr-btn-teal" onclick={openLead}>Review in Salesforce</button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template lwc:if={active.junkVisible}>
+                        <div class="ldr-banner ldr-banner-junk ldr-dismissable">
+                            <button class="ldr-dismiss" data-key="junk" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button>
+                            <div><strong>Marked as junk</strong>&nbsp;({active.junkReason}) by {active.junkBy} on {active.junkWhen}. It stays in Finished for {finishedDays} days. No Lead or Contact was created or changed.</div>
+                            <button class="ldr-btn ldr-btn-teal ldr-btn-small" onclick={restoreJunk} disabled={busy}>Restore</button>
+                        </div>
+                    </template>
+
+                    <template lwc:if={active.tookOverVisible}>
+                        <div class="ldr-banner ldr-banner-warn ldr-dismissable">
+                            <!-- #152 E: × on every tab; a dismissal is kept for this submission (per user, in this browser) -->
+                            <button class="ldr-dismiss" onclick={dismissTookOver} aria-label="Dismiss this alert" title="Dismiss">×</button>⚠ You took this over from&nbsp;<strong>{active.tookOverFrom}</strong>&nbsp;on claim. Reminder: review and connect with them before working it, in case they already made progress.</div>
+                    </template>
+
+                    <template lwc:if={active.assignedVisible}>
+                        <div class="ldr-banner ldr-banner-assigned ldr-dismissable">
+                            <button class="ldr-dismiss" data-key="assigned" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button>→ This was assigned to you by&nbsp;<strong>{active.assignedByName}</strong>. You didn't claim it yourself.</div>
+                    </template>
+
+                    <template lwc:if={active.notYetLinkedVisible}>
+                        <div class="ldr-banner ldr-banner-unlinked ldr-dismissable">
+                            <button class="ldr-dismiss" data-key="notYetLinked" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button>
+                            <div class="ldr-banner-text">ℹ No Lead or Contact linked to this submission yet. There may be a short delay between a submission and Salesforce creating or matching the record.</div>
+                            <div class="ldr-btn-row">
+                                <button class="ldr-btn ldr-btn-small ldr-btn-primary" onclick={startCreateLead} disabled={busy}>Create Lead</button>
+                                <button class="ldr-btn ldr-btn-small ldr-btn-teal" onclick={refreshLinkCheck} disabled={busy}>{refreshLinkLabel}</button>
+                                <button class="ldr-btn ldr-btn-small ldr-btn-teal" onclick={linkExistingRecord} disabled={busy}>Link to Existing Lead/Contact</button>
+                            </div>
+                            <template lwc:if={emailMatchText}>
+                                <div class="ldr-unlinked-hint ldr-unlinked-match"><strong>{emailMatchText}</strong></div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <template lwc:if={active.staleStatusVisible}>
+                        <div class="ldr-banner ldr-banner-info ldr-dismissable">
+                            <button class="ldr-dismiss" data-key="staleStatus" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button>↻ This is a fresh, unclaimed submission, but the {active.recordObject}'s {active.statusLabel} is still&nbsp;<strong>{active.leadStatus}</strong>&nbsp;from an earlier cycle. Claiming will reset Status to New: this new submission is treated as a re-engagement signal, overriding the stale status.</div>
+                    </template>
+
+                    <template lwc:if={active.decidedStatusVisible}>
+                        <div class="ldr-banner ldr-banner-decided ldr-dismissable">
+                            <button class="ldr-dismiss" data-key="decidedStatus" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button>⚠ This {active.recordWordLower} is already&nbsp;<strong>{active.leadStatus}</strong>. By claiming it, you will reset the status to New. If that's not what you meant to do, you can move it back to {active.leadStatus} afterward.</div>
+                    </template>
+
+                    <!-- v5.6b: was at the top of the left column, which pushed What They Submitted below LDR Fields. × on
+                         every tab, like "took this over"; it comes back when the LDR switches submission or tab. -->
+                    <template lwc:if={active.mismatchVisible}>
+                        <div class="ldr-banner ldr-banner-warn ldr-dismissable">
+                            <button class="ldr-dismiss" data-key="mismatch" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button>
+                            <div class="ldr-strong">Check before hand-off</div>
+                            <template for:each={active.mismatches} for:item="m">
+                                <div key={m.key}>• {m.text}</div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <template lwc:if={active.needsStatusVisible}>
+                        <div class="ldr-banner ldr-banner-alert ldr-dismissable">
+                            <button class="ldr-dismiss" data-key="needsStatus" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button>● You claimed this but Status is still&nbsp;<strong>New</strong>. Claiming sets ownership, but Status needs to be updated below.</div>
+                    </template>
+                    </div>
+                    </template>
+
+                    <!-- #161: the status-button line, right above LDR Fields / What They Submitted: "In Outreach" on the left,
+                         the status buttons + Junk ▾ on the right (canvas d84b one-click status; not on prospects). flow-root
+                         with 16px below, so the boxes never move up into it. -->
+                    <div class="ldr-d-statusbar">
+                        <template lwc:if={active.showHeaderLine3}>
+                            <div class="ldr-d-line ldr-d-statusline">
+                                <template lwc:if={active.showStatusRow}>
+                                    <div class="ldr-d-line-right ldr-status-row ldr-status-row-head">
+                                        <template for:each={active.statusButtons} for:item="sb">
+                                            <button key={sb.key} class={sb.cls} data-status={sb.value} onclick={quickStatus} disabled={sb.off} title={sb.title}>{sb.label}</button>
+                                        </template>
+                                        <div class="ldr-junk-wrap">
+                                            <button class={active.junkBtnCls} onclick={toggleJunkMenu} disabled={active.junkOff} title={active.junkTitle} aria-haspopup="true">Junk ▾</button>
+                                            <template lwc:if={junkMenuOpen}>
+                                                <div class="ldr-junk-menu ldr-junk-menu-right" role="menu">
+                                                    <div class="ldr-junk-note">{active.junkMenuNote}</div>
+                                                    <template for:each={junkReasonItems} for:item="jr">
+                                                        <button key={jr.key} class="ldr-junk-item" role="menuitem" data-reason={jr.reason} onclick={markJunk}>{jr.reason}</button>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template lwc:if={active.hasOutreach}>
+                                    <span class="ldr-outreach">📨 In Outreach: <strong>{active.outreachLabel}</strong></span>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- LOG A CALL (#152 G): a centred popup; Cancel then Save, bottom right (Save or Cancel closes it) -->
+                    <template lwc:if={loggingCall}>
+                        <div class="ldr-overlay" data-close="cancelLogCall" onmousedown={overlayDown} onclick={overlayClick}>
+                        <div class="ldr-dialog ldr-dialog-pop ldr-dialog-call" role="dialog" aria-label="Log a Call">
+                            <div class="ldr-pop-title">How did the call with {active.name} go?</div>
+                            <!-- canvas aabc (#96E): pick an outcome, add Comments, then Save creates the Task -->
+                            <div class="ldr-chips ldr-chips-wrap">
+                                <template for:each={callOutcomes} for:item="oc">
+                                    <button key={oc.key} class={oc.cls} data-key={oc.key} onclick={pickCallOutcome}
+                                        disabled={busy}>{oc.label}</button>
+                                </template>
+                            </div>
+                            <lightning-textarea class="ldr-call-notes" label="Comments" value={callNotes} onchange={handleCallNotes}
+                                placeholder="Notes about the call (saved to the call's Comments)" max-length="30000"></lightning-textarea>
+                            <div class="ldr-call-actions ldr-pop-actions">
+                                <button class="ldr-btn ldr-btn-small" onclick={cancelLogCall}>Cancel</button>
+                                <button class={callSaveCls} onclick={saveLogCall} disabled={callSaveOff} title={callSaveTitle}>Save</button>
+                            </div>
+                        </div>
+                        </div>
+                    </template>
+
+                    <!-- CREATE LEAD (#160): a centred popup (was a panel under the header); × top right, Cancel / Create Lead
+                         bottom right. First | Last Name, Email | Phone, Lead Status | Customer Type | Company, then the
+                         address with Address Search (Quick Edit's lookup: a pick fills Country, Street, City, State, Zip). -->
+                    <template lwc:if={creatingLead}>
+                        <div class="ldr-overlay" data-close="cancelCreateLead" onmousedown={overlayDown} onclick={overlayClick}>
+                        <div class="ldr-dialog ldr-dialog-pop ldr-dialog-lead" role="dialog" aria-label="Create Lead">
+                            <div class="ldr-pop-head">
+                                <div>
+                                    <div class="ldr-pop-title">Create Lead</div>
+                                    <div class="ldr-muted ldr-small">Pre-filled from the form submission. Fields marked * are required. Saving creates the Lead (Salesforce validation and duplicate rules apply) and links it to this submission.</div>
+                                </div>
+                                <button class="ldr-dialog-close" onclick={cancelCreateLead} aria-label="Close">×</button>
+                            </div>
+                            <template lwc:if={leadPicklistsMissing}>
+                                <div class="ldr-small ldr-warn-text">Lead picklist values haven't loaded (Country / State / Status / Customer Type). Check that you can create Leads.</div>
+                            </template>
+                            <div class="ldr-lead-grid">
+                                <lightning-input label="First Name" required data-field="FirstName" value={leadForm.FirstName} onchange={handleLeadField}></lightning-input>
+                                <lightning-input label="Last Name" required data-field="LastName" value={leadForm.LastName} onchange={handleLeadField}></lightning-input>
+                                <lightning-input label="Email" type="email" data-field="Email" value={leadForm.Email} onchange={handleLeadField}></lightning-input>
+                                <lightning-input label="Phone" type="tel" data-field="Phone" value={leadForm.Phone} onchange={handleLeadField}></lightning-input>
+                            </div>
+                            <div class="ldr-lead-grid ldr-lead-grid3">
+                                <lightning-combobox label="Lead Status" required data-field="Status" value={leadForm.Status} options={leadStatusOptions} onchange={handleLeadField}></lightning-combobox>
+                                <lightning-combobox label="Customer Type" required data-field="Type__c" value={leadForm.Type__c} options={leadTypeOptions} onchange={handleLeadField}></lightning-combobox>
+                                <lightning-input label="Company" required data-field="Company" value={leadForm.Company} onchange={handleLeadField}></lightning-input>
+                            </div>
+                            <lightning-input-address class="ldr-lead-address" address-label="Address"
+                                address-lookup-label="Address Search" address-lookup-placeholder="Search Address"
+                                country-label="Country" street-label="Street" city-label="City"
+                                province-label="State / Province" postal-code-label="Zip / Postal Code"
+                                street={leadForm.Street} city={leadForm.City} province={leadForm.StateCode} postal-code={leadForm.PostalCode}
+                                country={leadForm.CountryCode} country-options={leadCountryOptions} province-options={leadStateOptions}
+                                show-address-lookup onchange={handleLeadAddress}></lightning-input-address>
+                            <div class="ldr-pop-actions">
+                                <template lwc:if={showLeadFormMissing}>
+                                    <span class="ldr-small ldr-error-text ldr-grow">{leadFormMissingText}</span>
+                                </template>
+                                <button class="ldr-btn" onclick={cancelCreateLead} disabled={busy}>Cancel</button>
+                                <button class="ldr-btn ldr-btn-primary" onclick={submitCreateLead} disabled={busy}>Create Lead</button>
+                            </div>
+                        </div>
+                        </div>
+                    </template>
+
+                    <div class="ldr-grid">
+                        <!-- LEFT COLUMN (v5.6b: "Check before hand-off" moved up to the alerts, so What They Submitted and
+                             LDR Fields always start level) -->
+                        <div class="ldr-col">
+                            <!-- PROSPECT: why this one (canvas a111) -->
+                            <template lwc:if={prospectDetail.isProspect}>
+                                <div class={prospectDetail.cardCls}>
+                                    <div class="ldr-card-title-row">
+                                        <div class="ldr-card-title">Why this prospect</div>
+                                        <span class={prospectDetail.tierCls}>{prospectDetail.tierLabel}</span>
+                                    </div>
+                                    <template lwc:if={prospectDetail.hasHiddenNote}>
+                                        <div class="ldr-why-hidden">{prospectDetail.hiddenNote}</div>
+                                    </template>
+                                    <template for:each={prospectDetail.why} for:item="w">
+                                        <div key={w.key} class="ldr-why-line"><span class="ldr-why-pts">{w.points}</span><span>{w.text}</span></div>
+                                    </template>
+                                    <div class="ldr-small ldr-muted ldr-why-foot">{prospectDetail.claimNote}</div>
+                                </div>
+                            </template>
+                            <!-- 3D CONFIGURATOR: renders, configuration, quotes and files from KBMax_Web_Quote__c -->
+                            <template lwc:if={prospectDetail.isConfigurator}>
+                                <template lwc:if={prospectDetail.cfgLoading}>
+                                    <div class="ldr-card ldr-muted ldr-small">Loading their configurator quotes…</div>
+                                </template>
+                                <template lwc:if={prospectDetail.noCfg}>
+                                    <div class="ldr-card ldr-muted ldr-small">No configurator quotes found in the date range.</div>
+                                </template>
+                                <template lwc:if={prospectDetail.hasCfg}>
+                                    <div class="ldr-card">
+                                        <div class="ldr-card-title">Configuration · latest quote</div>
+                                        <div class="ldr-facts">
+                                            <template for:each={prospectDetail.facts} for:item="cf">
+                                                <div key={cf.k} class="ldr-fact">
+                                                    <div class="ldr-fact-k">{cf.k}</div>
+                                                    <div class="ldr-fact-v">{cf.v}</div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <div class="ldr-cfg-quotes">
+                                            <div class="ldr-card-title-row">
+                                                <div class="ldr-card-title">{prospectDetail.quotesTitle}</div>
+                                                <template lwc:if={prospectDetail.hasMoreQuotes}>
+                                                    <button class="ldr-pill-btn" onclick={toggleCfgQuotes}>{prospectDetail.quotesToggleLabel}</button>
+                                                </template>
+                                            </div>
+                                            <template for:each={prospectDetail.quotes} for:item="cq">
+                                                <div key={cq.key} class="ldr-cfg-quote">
+                                                    <span class="ldr-cfg-q-when">{cq.when}</span>
+                                                    <span class="ldr-cfg-q-model">{cq.model}</span>
+                                                    <span class="ldr-cfg-q-project">{cq.project}</span>
+                                                    <span class="ldr-strong">{cq.price}</span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <template lwc:if={prospectDetail.hasCfg}>
+                                        <div class="ldr-card">
+                                            <div class="ldr-card-title-row">
+                                                <div class="ldr-card-title">Renders from the latest quote</div>
+                                                <span class="ldr-small ldr-muted">Click a tile to expand</span>
+                                            </div>
+                                            <div class="ldr-cfg-previews">
+                                                <template for:each={prospectDetail.previews} for:item="pv">
+                                                    <div key={pv.key} class="ldr-cfg-tile">
+                                                        <button class="ldr-cfg-tile-btn" data-index={pv.index} onclick={openCfgPreview}>
+                                                            <template lwc:if={pv.hasImage}>
+                                                                <img class="ldr-cfg-img" src={pv.url} alt={pv.label}/>
+                                                            </template>
+                                                            <template lwc:else>
+                                                                <div class="ldr-cfg-noimg"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#707070" stroke-width="1.6" aria-hidden="true"><rect x="3" y="4" width="18" height="16"></rect><circle cx="8.5" cy="9.5" r="1.8"></circle><path d="M21 16l-5-5-8 9"></path></svg><div class="ldr-small ldr-muted">No link yet</div></div>
+                                                            </template>
+                                                        </button>
+                                                        <div class="ldr-cfg-label">{pv.label}</div>
+                                                        <div class="ldr-cfg-sub">{pv.sub}</div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="ldr-small ldr-muted ldr-cfg-note">Only the main render has a link in Salesforce today (Render_File_URL__c). The four position renders are IDs only: Position_file_image_1_Id__c to _4_Id__c (the new fields; until they are populated, the IDs shown here come from Position_File_Ids__c). An ID can't be opened by itself, so each image also needs a link, like the main render has.</div>
+                                        </div>
+                                    </template>
+                                    <div class="ldr-card">
+                                        <div class="ldr-card-title">Files on the latest quote</div>
+                                        <template for:each={prospectDetail.files} for:item="fr">
+                                            <div key={fr.key}>
+                                                <template lwc:if={fr.isGroup}>
+                                                    <div class="ldr-cfg-file-group">{fr.label}</div>
+                                                </template>
+                                                <template lwc:if={fr.isFile}>
+                                                    <div class="ldr-cfg-file">
+                                                        <div class={fr.tileCls}>{fr.tile}</div>
+                                                        <div class="ldr-grow"><div class="ldr-strong">{fr.label}</div><div class="ldr-small ldr-muted">{fr.hint}</div></div>
+                                                        <template lwc:if={fr.has}>
+                                                            <a href={fr.url} target="_blank" rel="noopener" class="ldr-cfg-open">Open ›</a>
+                                                        </template>
+                                                        <template lwc:if={fr.noLink}>
+                                                            <span class="ldr-small ldr-muted">{fr.noLinkText}</span>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <div class="ldr-small ldr-muted ldr-cfg-note">These are the links stored on the quote. Salesforce does not record whether someone downloaded a file. The exact Revit, IFC and drawing files exist on only some quotes, so they are the best hint of a request; the specification and saved project are on nearly every quote. The XML file and the product manuals are also attached to most quotes and are not listed here.</div>
+                                    </div>
+                                </template>
+                            </template>
+
+                            <div class="ldr-card">
+                                <div class="ldr-card-title">What they submitted</div>
+                                <div class="ldr-facts ldr-facts-submitted">
+                                    <template for:each={active.facts} for:item="f">
+                                        <div key={f.k} class={f.wrapCls}>
+                                            <div class="ldr-fact-k">{f.k}</div>
+                                            <template lwc:if={f.hasLink}>
+                                                <button class="ldr-link-btn ldr-fact-link" data-id={f.linkId} data-object={f.linkObject} onclick={openFactLink}>{f.v}</button>
+                                            </template>
+                                            <template lwc:else>
+                                                <div class={f.cls}>{f.v}</div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                                <template lwc:if={active.hasNearbyShowroom}>
+                                    <div class="ldr-showroom">📍 {active.nearbyShowroomMiles} mi from the&nbsp;<a href={active.nearbyShowroomUrl} target="_blank" rel="noopener"><strong>{active.nearbyShowroomName}</strong></a>&nbsp;showroom ({active.nearbyShowroomAddress}), worth mentioning if it comes up.</div>
+                                </template>
+                                <div class="ldr-comments">
+                                    <div class="ldr-fact-k">Questions or comments</div>
+                                    <div class="ldr-comment-text ldr-comment-big">{active.commentsDisplay}</div>
+                                </div>
+                            </div>
+
+                            <template lwc:if={detailExtras.hasCeNote}>
+                                <div class={detailExtras.ceNoteCls} style={detailExtras.ceNoteStyle}>
+                                    <div class="ldr-ce-note-head"><span class="ldr-card-title">6Sense Activity</span><span class="ldr-ce-tag" style={detailExtras.ceNoteTagStyle}>{detailExtras.ceNoteTag}</span></div>
+                                    <div class="ldr-ce-note-text">{detailExtras.ceNoteText}</div>
+                                </div>
+                            </template>
+
+                            <template lwc:if={active.hasAttachments}>
+                                <div class="ldr-card">
+                                    <div class="ldr-card-title-row">
+                                        <div class="ldr-card-title">Attachments ({active.attachmentCount}) · Attachments__c</div>
+                                        <template lwc:if={active.attachmentsExpiring}>
+                                            <span class="ldr-tag ldr-att-expiry">Expires in {active.attachmentsDaysLeft}d — save now</span>
+                                        </template>
+                                    </div>
+                                    <div class="ldr-attachments">
+                                        <template for:each={active.attachments} for:item="att">
+                                            <div key={att.key} class="ldr-att-tile">
+                                                <template lwc:if={att.isImage}>
+                                                    <button class="ldr-att-thumb-btn" data-url={att.url} data-label={att.label} onclick={openLightbox} title={att.name}>
+                                                        <img class="ldr-att-thumb" src={att.url} alt={att.label} loading="lazy"/>
+                                                    </button>
+                                                </template>
+                                                <template lwc:elseif={att.isPdf}>
+                                                    <a href={att.url} target="_blank" rel="noopener noreferrer" title={att.name}>
+                                                        <span class="ldr-att-pdf"><span class="ldr-att-pdf-big">PDF</span><span class="ldr-att-pdf-sub">Click to open</span></span>
+                                                    </a>
+                                                </template>
+                                                <template lwc:else>
+                                                    <a href={att.url} target="_blank" rel="noopener noreferrer" title={att.name}>
+                                                        <span class="ldr-att-other">{att.kind}</span>
+                                                    </a>
+                                                </template>
+                                                <a class="ldr-att-download" href={att.url} download={att.label} target="_blank" rel="noopener noreferrer" title="Download">
+                                                    <lightning-icon icon-name="utility:download" size="xx-small" variant="inverse" alternative-text="Download"></lightning-icon>
+                                                </a>
+                                                <a class="ldr-att-name-link" href={att.url} target="_blank" rel="noopener noreferrer" title={att.name}>{att.label}</a>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template lwc:if={hasPersonOthers}>
+                                <div class="ldr-card ldr-card-related ldr-panel-green">
+                                    <div class="ldr-card-title ldr-related-title">Other submissions from this person</div>
+                                    <template for:each={personOthers} for:item="p">
+                                        <button key={p.key} class="ldr-related-row" data-id={p.recordId} onclick={openPerson}>
+                                            <div class="ldr-min0">
+                                                <div class="ldr-person-kind">{p.kind}</div>
+                                                <template lwc:if={p.hasPreview}>
+                                                    <div class="ldr-small ldr-person-preview">{p.preview}</div>
+                                                </template>
+                                                <div class={p.claimCls}>{p.claimLabel}</div>
+                                            </div>
+                                            <div class="ldr-related-right">
+                                                <div class="ldr-muted ldr-small">{p.whenLabel}</div>
+                                                <div class="ldr-muted ldr-small ldr-nowrap">{p.gapLabel}</div>
+                                                <div class={p.jumpCls}>{p.jumpLabel}</div>
+                                            </div>
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template lwc:if={hasRelated}>
+                                <div class="ldr-card ldr-card-related ldr-panel-green">
+                                    <div class="ldr-card-title ldr-related-title">{active.relatedTitle}</div>
+                                    <template for:each={relatedShown} for:item="r">
+                                        <button key={r.key} class="ldr-related-row" data-id={r.recordId} onclick={openRelated}>
+                                            <div class="ldr-min0">
+                                                <div class="ldr-related-head">
+                                                    <span class={r.kindCls}>{r.kind}</span>
+                                                    <span class="ldr-strong">{r.name}</span>
+                                                </div>
+                                                <div class="ldr-small">{r.summary}</div>
+                                                <template lwc:if={r.hasNote}>
+                                                    <div class="ldr-small ldr-rel-note">{r.note}</div>
+                                                </template>
+                                                <div class="ldr-small ldr-rel-open">Open in Salesforce</div>
+                                            </div>
+                                            <div class="ldr-related-right">
+                                                <div class="ldr-strong">{r.amountText}</div>
+                                                <div class="ldr-muted ldr-small">{r.amountLabel}</div>
+                                                <div class="ldr-muted ldr-small">{r.whenLabel}</div>
+                                                <template lwc:if={r.hasStatus}>
+                                                    <div class="ldr-muted ldr-small">Status: {r.status}</div>
+                                                </template>
+                                            </div>
+                                        </button>
+                                    </template>
+                                    <template lwc:if={hasMoreRelated}>
+                                        <div class="ldr-related-more">
+                                            <span class="ldr-muted ldr-small">{relatedShownLabel}</span>
+                                            <button class="ldr-btn ldr-btn-small" onclick={toggleRelated}>{relatedToggleLabel}</button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template lwc:if={active.showWindfall}>
+                                <div class="ldr-card">
+                                    <div class="ldr-card-title">Windfall Information</div>
+                                    <template lwc:if={active.windfallEmpty}>
+                                        <div class="ldr-muted ldr-small ldr-hint-line">No Windfall data on this {active.recordObject}.</div>
+                                    </template>
+                                    <template lwc:if={active.windfallFromLead}>
+                                        <div class="ldr-small ldr-hint-line ldr-wf-fromlead">From the converted Lead. Windfall reaches the Contact a day or two after conversion, so these are the Lead's values (also in the FETR).</div>
+                                    </template>
+                                    <div class="ldr-facts">
+                                        <template for:each={active.windfallFacts} for:item="w">
+                                            <div key={w.k}>
+                                                <div class="ldr-fact-k">{w.k}</div>
+                                                <div class="ldr-fact-v">{w.v}</div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template lwc:if={hasRepFlag}>
+                                <div class={repFlag.cls}>
+                                    <div class="ldr-strong ldr-rep-head">ℹ This customer also submitted a Representative-contact request {repFlag.whenLabel} ({repFlag.gapPhrase}).</div>
+                                    <template lwc:if={repFlag.isLong}>
+                                        <div class="ldr-rep-long">Long gap — likely means they couldn't get connected to the rep and came back to the site. Worth reaching out yourself rather than assuming the rep has it.</div>
+                                    </template>
+                                    <template lwc:else>
+                                        <div class="ldr-rep-short">Short gap — likely still with the rep. Probably safe to defer unless you hear otherwise.</div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template lwc:if={active.hasMatchedAccount}>
+                                <div>
+                                    <div class="ldr-section-title">Matched account: {active.matchedAccountName}</div>
+                                    <div class="ldr-card">
+                                        <div class="ldr-match-top">
+                                            <span class="ldr-pill-outline">LeanData match</span>
+                                        </div>
+                                        <div class="ldr-match-stats">
+                                            <div>
+                                                <div class="ldr-fact-k">Past opportunities</div>
+                                                <div class="ldr-stat">{active.matchedOppCount}</div>
+                                            </div>
+                                            <div>
+                                                <div class="ldr-fact-k">Past orders</div>
+                                                <div class="ldr-stat">{active.matchedOrderCount}</div>
+                                            </div>
+                                            <div>
+                                                <div class="ldr-fact-k">City / State</div>
+                                                <div class="ldr-fact-v">{matchedLocation}</div>
+                                            </div>
+                                            <div>
+                                                <div class="ldr-fact-k">Website</div>
+                                                <div class="ldr-fact-v">{matchedWebsite}</div>
+                                            </div>
+                                        </div>
+                                        <template lwc:if={active.matchedIsCompetitor}>
+                                            <div class="ldr-competitor">⚠ This account also works with a competitor</div>
+                                        </template>
+                                        <div class="ldr-fact-k ldr-strong-k">Opportunities this account has worked on</div>
+                                        <template lwc:if={noAccountOpps}>
+                                            <div class="ldr-muted ldr-small">None on this account yet.</div>
+                                        </template>
+                                        <template lwc:if={hasAccountOpps}>
+                                            <template for:each={accountOpps} for:item="o">
+                                                <button key={o.key} class={o.cardCls} data-id={o.recordId} onclick={openRelated}>
+                                                    <div class="ldr-opp-head">
+                                                        <span class="ldr-strong ldr-opp-name">{o.name}</span>
+                                                        <span class={o.stageCls}>{o.status}</span>
+                                                    </div>
+                                                    <div class="ldr-opp-grid">
+                                                        <div><div class="ldr-fact-k">Amount</div><div class="ldr-fact-v">{o.amountLabel}</div></div>
+                                                        <div><div class="ldr-fact-k">Created</div><div class="ldr-fact-v">{o.createdLabel}</div></div>
+                                                        <div><div class="ldr-fact-k">Expected resolution</div><div class="ldr-fact-v">{o.closeLabel}</div></div>
+                                                    </div>
+                                                </button>
+                                            </template>
+                                            <template lwc:if={hasMoreOpps}>
+                                                <button class="ldr-link-btn ldr-link-teal" onclick={openAccountOpps}>+{moreOppsCount} more → view in Salesforce</button>
+                                            </template>
+                                        </template>
+                                        <div class="ldr-links">
+                                            <button class="ldr-link-btn ldr-link-teal" onclick={openMatchedAccount}>Open Account</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- FETR (rep hand-off email details), Contact rows -->
+                            <template lwc:if={active.showFetr}>
+                                <div class="ldr-card">
+                                    <div class="ldr-preview-head ldr-fetr-head">
+                                        <div class="ldr-fetr-titlegrp">
+                                            <div class="ldr-card-title ldr-nowrap">FETR · rep email</div>
+                                            <!-- canvas #120: pick the project when the Contact has more than one open project -->
+                                            <template lwc:if={active.hasFetrProjects}>
+                                                <select class="ldr-fetr-project" aria-label="Project for this FETR" title="Project used for the FETR's Project Name and Split Territory" onchange={handleFetrProject}>
+                                                    <template for:each={active.fetrProjects} for:item="fp">
+                                                        <option key={fp.value} value={fp.value} selected={fp.selected}>{fp.label}</option>
+                                                    </template>
+                                                </select>
+                                            </template>
+                                        </div>
+                                        <div class="ldr-fetr-btns">
+                                            <template lwc:if={active.fetrEdited}>
+                                                <button class="ldr-btn ldr-btn-small ldr-btn-outline ldr-noshrink" onclick={resetFetr} title="Put the Salesforce values back">Reset</button>
+                                            </template>
+                                            <button class="ldr-btn ldr-btn-small ldr-btn-teal ldr-noshrink" onclick={copyFetr}>Copy FETR</button>
+                                        </div>
+                                    </div>
+                                    <template lwc:if={active.hasFetrProjects}>
+                                        <div class={active.fetrProjectNoteCls}>{active.fetrProjectNote}</div>
+                                    </template>
+                                    <div class="ldr-fetr">
+                                        <template for:each={active.fetrRows} for:item="fr">
+                                            <div key={fr.key}>
+                                                <template lwc:if={fr.isHeader}>
+                                                    <div class={fr.cls}>{fr.k}</div>
+                                                </template>
+                                                <!-- v6f8: every value is editable before copying; ↗ opens a linked one -->
+                                                <template lwc:else>
+                                                    <div class={fr.rowCls}>
+                                                        <strong class="ldr-fetr-k">{fr.k}:</strong>
+                                                        <template lwc:if={fr.multi}>
+                                                            <textarea class={fr.inCls} rows={fr.lines} data-id={fr.id} data-text={fr.v} oninput={handleFetrEdit} aria-label={fr.k}></textarea>
+                                                        </template>
+                                                        <template lwc:else>
+                                                            <input class={fr.inCls} type="text" data-id={fr.id} value={fr.v} oninput={handleFetrEdit} aria-label={fr.k}>
+                                                        </template>
+                                                        <template lwc:if={fr.hasHref}>
+                                                            <a class="ldr-fetr-open" href={fr.href} target="_blank" rel="noopener" title="Open">↗</a>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div class="ldr-card">
+                                <div class="ldr-card-title">Source &amp; tracking</div>
+                                <template lwc:if={active.hasCampaign}>
+                                    <div class={active.campaignCardCls}>
+                                        <div class="ldr-campaign-kicker">{active.campaignLabel}</div>
+                                        <div class="ldr-strong">{active.campaignTitle}</div>
+                                        <div class="ldr-small">{active.campaignBody}</div>
+                                    </div>
+                                </template>
+                                <div class="ldr-tracking">
+                                    <template for:each={active.tracking} for:item="t">
+                                        <div key={t.k}>
+                                            <div class="ldr-fact-k">{t.k}</div>
+                                            <div class="ldr-fact-v">{t.v}</div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <template lwc:if={active.hasUtmContent}>
+                                    <div class="ldr-utm-content">
+                                        <div class="ldr-fact-k">Ad / content (UTM_Content__c)</div>
+                                        <div class="ldr-fact-v">{active.utmContent}</div>
+                                    </div>
+                                </template>
+                                <template lwc:if={active.hasExpectedCampaign}>
+                                    <div class="ldr-muted ldr-small ldr-utm-content">This source tracking ({active.expectedCampaignType}) means Eloqua should also add them as a Campaign Member on the matching Salesforce Campaign. Worth checking the Campaigns related list if it's not there.</div>
+                                </template>
+                                <div class="ldr-links">
+                                    <template lwc:if={active.hasPlayback}>
+                                        <a href={active.playbackUrl} target="_blank" rel="noopener noreferrer">▶ FullStory session playback</a>
+                                    </template>
+                                    <button class="ldr-link-btn ldr-link-teal" onclick={openSubmission}>{active.submissionLinkLabel}</button>
+                                    <template lwc:if={active.hasLinkedRecord}>
+                                        <button class="ldr-link-btn ldr-link-teal" onclick={openLead}>Open in Salesforce</button>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Eloqua Profiler: the org's existing Profiler_Lead Visualforce page, which iframes
+                                 Eloqua's profiler for the Lead's email. Reusing the page avoids a CSP change for eloqua.com. -->
+                            <template lwc:if={active.hasLinkedRecord}>
+                                <div class="ldr-card">
+                                    <div class="ldr-card-title">Eloqua Profiler (Lead Activity Overview)</div>
+                                    <iframe class="ldr-profiler" src={active.profilerSrc} title="Eloqua Profiler"></iframe>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- RIGHT COLUMN: LDR FIELDS + LEAD HISTORY -->
+                        <div class="ldr-col">
+                            <div class="ldr-card ldr-fields">
+                                <!-- v5.6: "LDR Fields" (14px) with the Project Details button on the right of the same line
+                                     (Leads; it opens the Project Details popup). Convert/Hand-off moved under Status. -->
+                                <div class="ldr-fields-titlerow">
+                                    <div class="ldr-card-title">{active.fieldsTitle}</div>
+                                    <template lwc:if={showProjectDetailsBtn}>
+                                        <button class="ldr-btn ldr-btn-green-outline ldr-populate-btn" onclick={openProjectDetails}>Project Details</button>
+                                    </template>
+                                </div>
+                                <template lwc:if={showSavingIndicator}>
+                                    <div class="ldr-saving"><span class="ldr-saving-dot"></span>Saving Project Coordinator and Lead Funnel Timestamp…</div>
+                                </template>
+                                <!-- The status buttons and Junk ▾ moved to header line 1 (#152 F / #155 A). -->
+                                <template lwc:if={active.notYetLinked}>
+                                    <div class="ldr-muted ldr-small">No Lead or Contact linked yet, so there are no fields to edit.</div>
+                                </template>
+                                <template lwc:if={active.hasLinkedRecord}>
+                                    <!-- Project Coordinator: a dropdown of the coordinators only (Aqil, 2026-10-30; was a User
+                                         search that also listed people who aren't coordinators). You first, then the rest A-Z,
+                                         plus whoever is on the record now. -->
+                                    <!-- #152 I: Project Coordinator | Lead Funnel Timestamp, then Status | Lead Funnel Outcome, half
+                                         width each; plain labels (#153 C: no API names) -->
+                                    <template for:each={active.formKeys} for:item="fk">
+                                        <div key={fk} class="ldr-coord-fields ldr-pair">
+                                            <div class="ldr-pair-cell">
+                                                <lightning-combobox label="Project Coordinator" value={active.coordValue} options={active.coordOptions}
+                                                    onchange={handleCoordinatorPick} disabled={active.locked}></lightning-combobox>
+                                            </div>
+                                            <div class="ldr-pair-cell">
+                                                <lightning-input type="date" label="Lead Funnel Timestamp" value={active.funnelTsValue}
+                                                    onchange={handleFunnelTs} disabled={active.locked} class="ldr-nowrap-label"></lightning-input>
+                                            </div>
+                                            <!-- #95: under both fields, full width (v6f7; was under Project Coordinator only) -->
+                                            <template lwc:if={active.coordMismatch}>
+                                                <div class="ldr-small ldr-warn-text ldr-coord-note">From another submission</div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <!-- Status Reason isn't edited here any more (2026-10-21). For Wrong profile / Disqualified, Lead Funnel
+                                         Outcome shows a * and "Required when Status is …" as a prompt only: it isn't enforced. Editable
+                                         wherever Status is (incl. a converted Contact's status saved without claiming). -->
+                                    <div class="ldr-pair">
+                                        <div class="ldr-pair-cell">
+                                            <lightning-combobox label={active.statusLabel} value={draft.status} options={statusOptions}
+                                                onchange={handleStatus} disabled={active.statusLocked}></lightning-combobox>
+                                        </div>
+                                        <div class="ldr-pair-cell">
+                                            <lightning-combobox label={outcomeLabel} value={draft.outcome} options={outcomeOptions}
+                                                onchange={handleOutcome} disabled={active.statusLocked}></lightning-combobox>
+                                            <template lwc:if={outcomeFlagged}>
+                                                <div class="ldr-small ldr-error-text">{outcomeFlagText}</div>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <template lwc:if={active.adminEdit}>
+                                        <div class="ldr-admin-note">{active.adminEditNote}</div>
+                                    </template>
+                                    <!-- v5.6: Convert/Hand-off here (was on the LDR Fields title line), claimer only, sized to its
+                                         text; disabled while there are unsaved changes. v5.6b: Quick Edit's Cancel / Save on the
+                                         same line, on the right ("Unsaved changes" to their left). -->
+                                    <template lwc:if={canSaveLdrFields}>
+                                        <div class="ldr-handoff-row">
+                                            <!-- v5.7: Contacts get Attach to Opportunity here instead of Hand-off (was a full-width
+                                                 button under this line); it sets Lead Funnel Status = Qualified and the timestamp to
+                                                 today, then opens the Attach to Opportunity flow -->
+                                            <template lwc:if={active.isMine}>
+                                                <template lwc:if={active.canAttachOpp}>
+                                                    <button class="ldr-btn ldr-btn-handoff ldr-handoff-top" onclick={attachOppHandoff} disabled={handoffDisabled} title={handoffTitle}>Attach to Opportunity</button>
+                                                </template>
+                                                <template lwc:else>
+                                                    <button class="ldr-btn ldr-btn-handoff ldr-handoff-top" onclick={handoff} disabled={handoffDisabled} title={handoffTitle}>{handoffLabel}</button>
+                                                </template>
+                                            </template>
+                                            <div class="ldr-qe-actions ldr-save-row">
+                                                <template lwc:if={ldrDirty}>
+                                                    <span class="ldr-unsaved">Unsaved changes</span>
+                                                </template>
+                                                <button class="ldr-btn ldr-btn-small" onclick={cancelLdrEdits} disabled={ldrClean}>Cancel</button>
+                                                <button class="ldr-btn ldr-btn-primary ldr-btn-small" onclick={save} disabled={busy}>Save</button>
+                                            </div>
+                                        </div>
+                                    </template>
+
+                                    <!-- PROJECT DETAILS (v5.6): a centred popup from the Project Details button (was a collapsible
+                                         section). Hidden with CSS, not lwc:if, so the form keeps the saved values loaded (unsaved
+                                         check, Populate Project). Cancel discards the Project Details edits; Save saves the LDR
+                                         fields, like the Save under them, and closes the popup. -->
+                                    <template lwc:if={active.showProjectDetails}>
+                                        <div class={projectPopupCls} data-close="cancelProjectDetails" onmousedown={overlayDown} onclick={overlayClick}>
+                                        <div class="ldr-dialog ldr-dialog-pop ldr-dialog-pd" role="dialog" aria-label="Project Details">
+                                            <div class="ldr-pd-titlerow">
+                                                <div class="ldr-pop-title">Project Details · {active.name}</div>
+                                                <template lwc:if={showPopulateButton}>
+                                                    <button class="ldr-btn ldr-btn-green-outline ldr-populate-btn" onclick={populateProject} disabled={active.locked}>Populate Project</button>
+                                                </template>
+                                            </div>
+                                            <div class="ldr-pre-conversion">
+                                                <template for:each={active.formKeys} for:item="fk">
+                                                    <lightning-record-edit-form key={fk} record-id={active.leadId} object-api-name="Lead" density="comfy" onload={handleProjectFormLoad}>
+                                                        <!-- #160: one line, like the other boxes (Project_Name__c is a Text Area, which
+                                                             lightning-input-field draws as a multi-line box); kept in the draft, saved with Save -->
+                                                        <!-- v5.7: what Populate Project fills in gets ldr-autofilled (pdCls) until it's changed -->
+                                                        <lightning-input class={pdCls.name} label="Project Name" value={projectNameValue} max-length="255"
+                                                            onchange={handleProjectName} disabled={active.locked}></lightning-input>
+                                                        <lightning-input-field class={pdCls.type} field-name="Type_of_record__c" data-field="Type_of_record__c"
+                                                            onchange={handlePreField} disabled={active.locked}></lightning-input-field>
+                                                        <div class="ldr-pair ldr-pd-approw">
+                                                            <div class="ldr-pair-cell">
+                                                                <lightning-input-field class={pdCls.industry} field-name="Project_Application_Industry__c" data-field="Project_Application_Industry__c"
+                                                                    onchange={handlePreField} disabled={active.locked}></lightning-input-field>
+                                                            </div>
+                                                            <div class="ldr-pair-cell">
+                                                                <lightning-input-field class={pdCls.application} field-name="Project_Application__c" data-field="Project_Application__c"
+                                                                    onchange={handlePreField} disabled={active.locked}></lightning-input-field>
+                                                            </div>
+                                                        </div>
+                                                        <!-- canvas #134: Project Site address with Salesforce's Address Search (the Lead page's lookup).
+                                                             Values live in the LDR fields draft and are saved with Save, like the other fields. -->
+                                                        <lightning-input-address class="ldr-project-address" address-label="Project Site Address"
+                                                            address-lookup-label="Search project address" address-lookup-placeholder="Start typing a street, city or zip"
+                                                            country-label="Project Site Country" street-label="Project Site Street" city-label="Project Site City"
+                                                            province-label="Project Site State" postal-code-label="Project Site Zip"
+                                                            street={projectAddr.street} city={projectAddr.city} province={projectAddr.province}
+                                                            postal-code={projectAddr.postalCode} country={projectAddr.country}
+                                                            country-options={projectCountryOptions} province-options={projectStateOptions}
+                                                            show-address-lookup disabled={active.locked} onchange={handleProjectAddress}></lightning-input-address>
+                                                        <!-- v5.7b: the address parts Populate Project filled in (the inputs inside the address can't be
+                                                             highlighted); a part drops off when it's changed -->
+                                                        <template lwc:if={hasAutoFilledAddress}>
+                                                            <div class="ldr-autofill-note">Filled in by Populate Project:
+                                                                <template for:each={autoFilledAddress} for:item="p">
+                                                                    <span key={p.key} class="ldr-autofill-chip">{p.label}</span>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                        <!-- v5.6: the Lead page's Project Construction Classification and Project Timeline (v5.6c: under
+                                                             Project Site Zip, was under Industry / Application) -->
+                                                        <div class="ldr-pair ldr-pd-classrow">
+                                                            <div class="ldr-pair-cell">
+                                                                <lightning-input-field field-name="Project_Construction_Classification__c" data-field="Project_Construction_Classification__c"
+                                                                    onchange={handlePreField} disabled={active.locked}></lightning-input-field>
+                                                            </div>
+                                                            <div class="ldr-pair-cell">
+                                                                <lightning-input-field field-name="Project_Timeline__c" data-field="Project_Timeline__c"
+                                                                    onchange={handlePreField} disabled={active.locked}></lightning-input-field>
+                                                            </div>
+                                                        </div>
+                                                        <!-- v5.6: Quote Requested / Reference Opportunity (Lead checkboxes), box left of the name -->
+                                                        <div class="ldr-pair ldr-pd-checks">
+                                                            <div class="ldr-pair-cell">
+                                                                <lightning-input type="checkbox" label="Quote Requested" data-field="Quote_Request__c"
+                                                                    checked={quoteRequestedChecked} onchange={handlePreCheckbox} disabled={active.locked}></lightning-input>
+                                                            </div>
+                                                            <div class="ldr-pair-cell">
+                                                                <lightning-input type="checkbox" label="Reference Opportunity" data-field="Reference_Opportunity__c"
+                                                                    checked={referenceOppChecked} onchange={handlePreCheckbox} disabled={active.locked}></lightning-input>
+                                                            </div>
+                                                        </div>
+                                                        <!-- hidden: the form loads the saved values (unsaved-changes check) and Populate Project fills them -->
+                                                        <div class="ldr-hidden">
+                                                            <lightning-input-field field-name="Project_Name__c" data-field="Project_Name__c"></lightning-input-field>
+                                                            <lightning-input-field field-name="Project_Site_Country__c" data-field="Project_Site_Country__c"></lightning-input-field>
+                                                            <lightning-input-field field-name="Project_Site_Street__c" data-field="Project_Site_Street__c"></lightning-input-field>
+                                                            <lightning-input-field field-name="Project_Site_City__c" data-field="Project_Site_City__c"></lightning-input-field>
+                                                            <lightning-input-field field-name="Project_Site_State__c" data-field="Project_Site_State__c"></lightning-input-field>
+                                                            <lightning-input-field field-name="Project_Site_Zip_Code__c" data-field="Project_Site_Zip_Code__c"></lightning-input-field>
+                                                            <lightning-input-field field-name="Quote_Request__c"></lightning-input-field>
+                                                            <lightning-input-field field-name="Reference_Opportunity__c"></lightning-input-field>
+                                                        </div>
+                                                    </lightning-record-edit-form>
+                                                </template>
+                                            </div>
+                                            <!-- Quick Edit's Cancel / Save, bottom right -->
+                                            <div class="ldr-qe-actions ldr-pd-actions">
+                                                <button class="ldr-btn ldr-btn-small" type="button" onclick={cancelProjectDetails}>Cancel</button>
+                                                <template lwc:if={canSaveLdrFields}>
+                                                    <button class="ldr-btn ldr-btn-primary ldr-btn-small" type="button" onclick={saveProjectDetails} disabled={busy}>Save</button>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        </div>
+                                    </template>
+                                    <template lwc:if={active.showStatusOnlySave}>
+                                        <div class="ldr-muted ldr-small">You can update Lead Funnel Status without claiming this one.</div>
+                                        <button class="ldr-btn ldr-btn-outline" onclick={saveStatusOnly} disabled={busy}>Save status</button>
+                                    </template>
+                                    <template lwc:if={active.notMine}>
+                                        <div class="ldr-muted ldr-small">Claim this {active.recordWordLower} to edit its fields.</div>
+                                    </template>
+                                </template>
+                                <!-- Live region stays rendered so screen readers announce each new message. -->
+                                <div class="ldr-live" role="status" aria-live="polite">
+                                    <template lwc:if={message}>
+                                        <div class="ldr-toast">{message}</div>
+                                    </template>
+                                </div>
+                            </div>
+
+                                <template lwc:if={active.showContactOpps}>
+                                    <div class="ldr-card">
+                                        <div class="ldr-card-title">Open opportunities</div>
+                                        <template lwc:if={hasContactOpps}>
+                                            <template for:each={contactOpps} for:item="o">
+                                                <div key={o.key} class={o.cardCls}>
+                                                    <!-- v7 (Aqil): line 1 the tags on the right, line 2 the name on the left -->
+                                                    <div class="ldr-opp-head ldr-opp-head-v7">
+                                                        <span class="ldr-opp-tags">
+                                                            <template lwc:if={o.isSplit}>
+                                                                <span class="ldr-tag ldr-tag-split" title="Opportunity owner and Project owner are different">Split Territory</span>
+                                                            </template>
+                                                            <span class={o.stageCls}>{o.status}</span>
+                                                        </span>
+                                                        <button class="ldr-link-btn ldr-account-link ldr-opp-namelink" data-id={o.recordId} onclick={openRelated}>{o.name}</button>
+                                                    </div>
+                                                    <!-- canvas aabc (#96C): Opportunity Owner · Project Owner / Created · Amount (v7: Record Type and
+                                                         Close removed) -->
+                                                    <div class="ldr-copp-grid ldr-copp-grid-v7">
+                                                        <div><div class="ldr-fact-k">Opportunity Owner</div><div class="ldr-fact-v">{o.ownerLabel}</div></div>
+                                                        <div><div class="ldr-fact-k">Project Owner</div><div class="ldr-fact-v">{o.projectOwnerLabel}</div></div>
+                                                        <div><div class="ldr-fact-k">Created</div><div class="ldr-fact-v">{o.createdLabel}</div></div>
+                                                        <div><div class="ldr-fact-k">Amount</div><div class="ldr-fact-v">{o.amountLabel}</div></div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </template>
+                                        <template lwc:if={noContactOpps}>
+                                            <div class="ldr-muted">No open opportunities with this Contact on them.</div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <!-- FOLLOW UP INFORMATION: 6Sense Option (own Cancel / Save) + 6sense CE and Outreach fields -->
+                                <template lwc:if={active.showFollowUp}>
+                                    <div class="ldr-card">
+                                        <div class="ldr-card-title">Follow Up Information</div>
+                                        <template lwc:if={active.hasSixSense}>
+                                            <lightning-combobox label={active.sixSenseLabel} value={active.sixSenseValue} options={sixSenseOptions}
+                                                onchange={handleSixSense} disabled={active.locked}></lightning-combobox>
+                                        </template>
+                                        <div class="ldr-followup">
+                                            <template for:each={active.followUpRows} for:item="fu">
+                                                <div key={fu.k}>
+                                                    <div class="ldr-fact-k">{fu.k}</div>
+                                                    <div class={fu.cls}>{fu.v}</div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <template lwc:if={active.sixSenseDirty}>
+                                            <div class="ldr-btn-row ldr-save-row ldr-followup-save">
+                                                <span class="ldr-unsaved">Unsaved change</span>
+                                                <button class="ldr-btn ldr-btn-text ldr-grow" onclick={cancelSixSense} disabled={busy}>Cancel</button>
+                                                <button class="ldr-btn ldr-btn-green-outline ldr-grow" onclick={saveSixSense} disabled={busy}>Save</button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <div class="ldr-card">
+                                    <div class="ldr-card-title">Activity History (Task)</div>
+                                    <template lwc:if={hasActivity}>
+                                        <template for:each={activityShown} for:item="act">
+                                            <button key={act.key} class={act.rowCls} data-id={act.key} onclick={openActivityPreview} title="Preview">
+                                                <lightning-icon icon-name={act.iconName} alternative-text={act.kindLabel} title={act.kindLabel} size="x-small" class="ldr-activity-icon"></lightning-icon>
+                                                <span class="ldr-min0">
+                                                    <span class="ldr-task-link">{act.label}</span>
+                                                    <span class="ldr-small ldr-activity-meta">
+                                                        <span class={act.whoCls}>{act.who}</span>
+                                                        <template lwc:if={act.isSystem}>
+                                                                <span class="ldr-pill-auto">automated</span>
+                                                        </template>
+                                                        <span class="ldr-muted">&nbsp;· {act.whenLabel}</span>
+                                                    </span>
+                                                </span>
+                                            </button>
+                                        </template>
+                                    </template>
+                                    <template lwc:if={hasMoreActivity}>
+                                        <button class="ldr-link-btn ldr-link-green" onclick={toggleActivity}>{activityToggleLabel}</button>
+                                    </template>
+                                    <template lwc:if={noActivity}>
+                                        <div class="ldr-muted">No calls or emails logged in Salesforce yet for this {active.recordWordLower}.</div>
+                                    </template>
+                                </div>
+
+                                <div class="ldr-card">
+                                    <div class="ldr-card-title">{active.historyLabel}</div>
+                                    <template lwc:if={hasHistory}>
+                                        <template for:each={historyShown} for:item="h">
+                                            <div key={h.key} class="ldr-timeline-row">
+                                                <div>
+                                                    <template lwc:if={h.isCreated}>
+                                                        <div class="ldr-strong">Lead created</div>
+                                                    </template>
+                                                    <template lwc:else>
+                                                        <div><strong>{h.label}</strong>: {h.oldLabel} → {h.newLabel}</div>
+                                                    </template>
+                                                    <div class="ldr-muted ldr-small">by {h.who}</div>
+                                                </div>
+                                                <div class="ldr-muted ldr-small ldr-nowrap">{h.whenLabel}</div>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template lwc:if={hasMoreHistory}>
+                                        <button class="ldr-link-btn ldr-link-green" onclick={toggleHistory}>{historyToggleLabel}</button>
+                                    </template>
+                                    <template lwc:if={noHistory}>
+                                        <div class="ldr-muted">No tracked field changes yet — this {active.recordObject} hasn't been touched since it came in.</div>
+                                    </template>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- POST QUOTE REPLY (canvas #139-#142): Post Quote tab, or a done reply opened from Finished / All -->
+            <template lwc:if={pqDetailVisible}>
+                <c-ldr-post-quote row={pqActive} picklists={pqPicklists} viewer-id={viewerId} list-tab={tab}
+                    onpostquotechanged={handlePostQuoteChanged} ongototab={handleGoTab}></c-ldr-post-quote>
+            </template>
+        </div>
+        </template>
+    </div>
+</template>

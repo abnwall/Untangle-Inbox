@@ -1,0 +1,18 @@
+<template>
+    <template lwc:if={hasQuotes}>
+        <div class="kb-box">
+            <div class="kb-title">KBMax Web Quotes (last year)</div>
+            <div class="kb-note">Check a quote to add it to the new Opportunity (KBMax Web Quote Junction).</div>
+            <template for:each={rows} for:item="q">
+                <label key={q.id} class="kb-row">
+                    <input type="checkbox" data-id={q.id} checked={q.checked} disabled={q.off} onchange={handleCheck} />
+                    <span class="kb-text"><span class="kb-name">{q.name}</span><span class="kb-sub">{q.sub}</span></span>
+                    <template lwc:if={q.status}><span class="kb-status">{q.status}</span></template>
+                </label>
+            </template>
+        </div>
+    </template>
+    <template lwc:if={error}>
+        <div class="kb-error">{error}</div>
+    </template>
+</template>

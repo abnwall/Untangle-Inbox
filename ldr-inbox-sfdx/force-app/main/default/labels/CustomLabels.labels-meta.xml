@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>LDR_Estimate_Date_Windows</fullName>
+        <categories>LDR Inbox</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>LDR Inbox: instant estimate date windows</shortDescription>
+        <value>2026-10-01T00:00:00-07:00</value>
+    </labels>
+    <labels>
+        <fullName>LDR_Prospect_Since</fullName>
+        <categories>LDR Inbox</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>LDR Inbox: Prospects and Post Quote start date</shortDescription>
+        <value>2026-09-01T00:00:00-07:00</value>
+    </labels>
+</CustomLabels>

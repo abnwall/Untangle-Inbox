@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
+    <cacheControl>Public</cacheControl>
+    <contentType>application/zip</contentType>
+    <description>NanaWall brand fonts (Source Sans 3, Source Serif 4; SIL OFL 1.1) loaded by the LDR Inbox LWCs.</description>
+</StaticResource>

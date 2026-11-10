@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>false</isExposed>
+    <description>6Sense tab of the LDR Inbox (admins): 6sense email replies on Leads, Mine / Unassigned, with the person's page beside the list.</description>
+</LightningComponentBundle>

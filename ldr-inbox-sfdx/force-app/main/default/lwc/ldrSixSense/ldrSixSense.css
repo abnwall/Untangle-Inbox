@@ -1,0 +1,189 @@
+/* 6Sense tab (canvas #151, #152 K, #157 A, #158). Takes the place of the inbox's .ldr-body: list column + page.
+   Shadow DOM: the inbox's styles don't reach in, so the card / tag / group-pill / child-row / filter / header / LDR fields /
+   status-button rules are copied here from ldrInbox.css and the canvas. Sizes 11 / 12.5 / 14 / 16 / 19 / 24 / 30 px only;
+   no shadows; #707070 borders on selects; teal #00798F links. */
+:host { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0;
+    font-family: 'Source Sans 3', 'Trebuchet MS', 'Helvetica Neue', Helvetica, Arial, sans-serif; letter-spacing: 0.1px; color: #292929; }
+button { font-family: inherit; }
+.ss-body { flex: 1 1 auto; display: flex; min-height: 0; min-width: 0; }
+
+/* list column (= .ldr-queue) */
+.ss-queue { position: relative; width: 340px; flex-shrink: 0; border-right: 1px solid #D8D8D8; overflow-y: auto;
+    padding: 14px 14px 14px 24px; box-sizing: border-box; background: #fff; }
+.ss-box-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.ss-box { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; background: #fff;
+    border: 1px solid #D8D8D8; color: #3D3D3D; padding: 8px 6px; border-radius: 0; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.ss-box-count { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 0; background: #EBEBEB; color: #3D3D3D; }
+.ss-box.ss-box-on { background: #F0F8E8; border-color: #4A6D22; color: #194D19; }
+.ss-box.ss-box-on .ss-box-count { background: #4A6D22; color: #fff; }
+.ss-blurb { font-size: 11px; color: #707070; line-height: 1.4; margin-bottom: 10px; }
+.ss-filter-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+.ss-filter-row.ss-filter-row-last { margin-bottom: 10px; }
+.ss-filter { flex: 1 1 0; min-width: 0; background: #fff; border: 1px solid #707070; color: #3D3D3D; padding: 6px; border-radius: 0;
+    font-size: 12.5px; font-weight: 600; font-family: inherit; cursor: pointer; }
+.ss-sort-btn { flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 5px 10px; font-size: 12.5px; cursor: pointer;
+    background: #fff; color: #00798F; border: 1.5px solid #00798F; border-radius: 0; font-weight: 600; }
+.ss-sort-arrow { font-size: 14px; line-height: 1; }
+.ss-empty { font-size: 14px; color: #707070; padding: 24px 4px; }
+.ss-error { font-size: 12.5px; color: #C8102E; margin-bottom: 8px; }
+.ss-note { font-size: 11px; color: #707070; margin-bottom: 8px; line-height: 1.35; }
+
+/* group headers (CE Lead Status) */
+.ss-group-head { font-size: 12.5px; font-weight: 600; color: #292929; letter-spacing: 0.2px; margin: 14px 0 4px 0; }
+.ss-group-head.ss-group-head-first { margin-top: 2px; }
+.ss-group-count { font-weight: 600; color: #707070; letter-spacing: 0; }
+
+/* cards (= .ldr-row) */
+.ss-card { display: block; width: 100%; text-align: left; background: #fff; border: 1px solid #EBEBEB; border-left: 3px solid #C2C2C2;
+    border-radius: 0; padding: 8px 12px 8px 11px; margin-bottom: 6px; cursor: pointer; color: #292929; }
+.ss-card.ss-card-on { background: #F0F8E8; border-top-color: #4A6D22; border-right-color: #4A6D22; border-bottom-color: #4A6D22; }
+.ss-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px; }
+.ss-card-name { font-size: 14px; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.ss-type-icon { margin-right: 6px; }
+.ss-age { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 0; background: #E3E3E3; color: #3D3D3D; white-space: nowrap; flex-shrink: 0; }
+.ss-card-line { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
+.ss-card-subject { font-size: 12.5px; font-weight: 600; color: #292929; line-height: 1.35; overflow-wrap: anywhere; }
+.ss-card-preview { font-size: 11px; color: #3D3D3D; margin: 3px 0 5px 0; line-height: 1.35; overflow-wrap: anywhere; }
+.ss-card-bottom { display: flex; justify-content: flex-end; font-size: 11px; }
+.ss-card-coord { font-weight: 600; color: #3D3D3D; text-align: right; }
+.ss-card-coord.ss-card-coord-none { color: #C8102E; }
+.ss-group-foot { display: flex; margin-top: 5px; font-size: 11px; }
+.ss-group-pill { font-weight: 600; color: #fff; background: #7C5BA6; border: 1px solid #7C5BA6; border-radius: 0; padding: 1px 8px; }
+.ss-type-text { font-size: 11px; color: #707070; font-weight: 400; }
+
+/* child rows (= .ldr-row-child) */
+.ss-child { display: block; width: calc(100% - 22px); margin-left: 22px; text-align: left; background: #fff; border: 1px solid #EBEBEB;
+    border-left: 3px solid #C2C2C2; border-radius: 0; padding: 8px 11px; margin-bottom: 8px; cursor: pointer; color: #292929; }
+.ss-child .ss-card-top { margin-bottom: 0; }
+.ss-child-subject { font-size: 11px; font-weight: 600; color: #292929; margin-top: 5px; }
+.ss-child-preview { font-size: 11px; color: #3D3D3D; margin-top: 3px; line-height: 1.35; }
+
+/* tags */
+.ss-tag { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 0; background: #F5F5F5; color: #3D3D3D; white-space: nowrap; }
+.ss-tag.ss-tag-6s { background: #1F4E5F; color: #fff; border: 1px solid #1F4E5F; padding: 1px 6px; }
+.ss-tag.ss-tag-type { padding: 1px 6px; }
+.ss-tag.ss-tag-ce { padding: 2px 8px; }
+.ss-type-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; padding: 2px 8px; border: 1px solid; border-radius: 0; }
+.ss-type-pill c-ldr-type-icon { color: inherit; }
+
+/* page (= .ldr-detail / ldrPostQuote) */
+.ss-detail { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; background: #F4F2ED; padding: 20px 28px; box-sizing: border-box; }
+/* #157 A: a block with the buttons floated right; then the [icon][name] row (centred together, 44px); then three full-width
+   info lines that start at the icon's left edge */
+.ss-head { display: flow-root; min-width: 0; margin-bottom: 16px; }
+/* #152 F: buttons block at least 44px high, centred with the icon and the name row */
+.ss-actions-float { float: right; display: flex; gap: 8px; align-items: center; align-content: center; min-height: 44px; flex-wrap: wrap;
+    justify-content: flex-end; max-width: 100%; margin: 0 0 6px 16px; }
+.ss-btn { padding: 8px 14px; font-size: 12.5px; white-space: nowrap; text-decoration: none; background: #fff; color: #00798F;
+    border: 1.5px solid #00798F; border-radius: 0; font-weight: 600; cursor: pointer; line-height: normal; }
+.ss-btn:hover, .ss-btn:focus { text-decoration: none; color: #00798F; }
+.ss-name-row { display: flex; gap: 14px; align-items: center; min-width: 0; margin-bottom: 6px; }
+.ss-record-icon { flex-shrink: 0; }
+.ss-name-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; min-height: 44px; }
+.ss-title { font-family: 'Source Serif Pro', 'Source Serif 4', Georgia, serif; font-size: 24px; font-weight: 400; letter-spacing: -0.2px;
+    line-height: 1.15; color: #292929; }
+/* #157 A / #158: three 24px lines in line 1's plain style (12.5px #707070, the header's sans font) that may wrap; Current Tab
+   floats right on line 1, the status buttons on line 3 */
+.ss-line { display: flow-root; font-size: 12.5px; color: #707070; line-height: 24px; }
+.ss-line.ss-line-gap { margin-bottom: 3px; }
+.ss-line-right { float: right; margin-left: 16px; }
+.ss-status-btns { line-height: normal; display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; }
+.ss-status-btn { font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 3px 10px; border-radius: 0; white-space: nowrap;
+    background: #fff; color: #00798F; border: 1.5px solid #00798F; cursor: pointer; }
+.ss-status-btn.ss-status-btn-on { background: #00798F; color: #fff; }
+.ss-status-btn:disabled { opacity: 0.55; cursor: default; }
+.ss-current-tab { color: #3D3D3D; font-size: 12.5px; }
+.ss-current-tab strong { color: #292929; }
+.ss-ink { color: #292929; }
+.ss-red { color: #C8102E; }
+
+/* banners */
+.ss-banner-ok { background: #F0F8E8; border: 1px solid #C4E2A2; color: #194D19; border-radius: 0; padding: 11px 14px; font-size: 14px; margin-bottom: 14px; }
+.ss-banner-warn { background: #E1DED8; border: 1px solid #C6C1B0; color: #292929; border-radius: 0; padding: 11px 14px; font-size: 14px; margin-bottom: 14px; }
+
+/* two columns: replies | LDR Fields + 6sense */
+.ss-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 14px 18px; align-items: start; }
+.ss-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.ss-panel { background: #fff; border: 1px solid #D8D8D8; border-radius: 0; padding: 16px; }
+.ss-panel-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.ss-panel-title { font-size: 12.5px; font-weight: 600; color: #292929; letter-spacing: 0.2px; }
+.ss-panel-title.ss-panel-title-gap { margin-bottom: 12px; }
+.ss-link-small { font-size: 11px; font-weight: 600; color: #00798F; white-space: nowrap; }
+.ss-reply-meta { font-size: 11px; color: #707070; margin-bottom: 10px; overflow-wrap: anywhere; }
+.ss-reply-meta.ss-reply-meta-tight { margin-bottom: 0; }
+.ss-reply { font-size: 14px; color: #292929; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
+.ss-reply.ss-reply-other { line-height: 1.5; }
+.ss-other { border: 1px solid #D8D8D8; border-radius: 0; padding: 10px 12px; margin-bottom: 10px; }
+.ss-other:last-child { margin-bottom: 0; }
+.ss-other-head { margin-bottom: 4px; }
+.ss-muted { font-size: 14px; color: #707070; }
+
+/* LDR Fields / 6sense fields */
+.ss-field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
+.ss-field.ss-field-last { margin-bottom: 0; }
+.ss-label { font-size: 11px; color: #707070; }
+.ss-value { font-size: 14px; color: #292929; }
+.ss-field .ss-ink, .ss-field .ss-red { font-size: 14px; }
+.ss-wrap { overflow-wrap: anywhere; }
+.ss-since { font-size: 12.5px; color: #707070; }
+.ss-select { width: 100%; min-width: 0; box-sizing: border-box; padding: 8px 10px; border: 1px solid #707070; border-radius: 0; font-size: 14px;
+    background: #fff; color: #292929; font-family: inherit; }
+.ss-prompt { font-size: 11px; color: #C8102E; }
+.ss-hint { font-size: 11px; color: #707070; margin-top: 12px; line-height: 1.4; }
+/* ==== v5.6b: alerts above the status-button line (#161, as on the inbox and Post Quote): header, alerts (10px
+   above and below), then line 3, 16px above the boxes ==== */
+.ss-head { margin-bottom: 3px; }
+.ss-alerts { margin: 10px 0; }
+.ss-alerts .ss-banner-ok, .ss-alerts .ss-banner-warn { margin-bottom: 10px; }
+.ss-alerts > :last-child { margin-bottom: 0; }
+/* v5.7: × on the right of each banner (same as the inbox's) */
+.ss-dismissable { position: relative; padding-right: 36px; }
+.ss-dismiss { position: absolute; top: 6px; right: 8px; width: 24px; height: 24px; border: 0; background: transparent; color: inherit; opacity: .65; font-size: 19px; line-height: 1; cursor: pointer; padding: 0; }
+.ss-dismiss:hover, .ss-dismiss:focus { opacity: 1; }
+.ss-statusbar { margin-bottom: 6px; } /* v6f: 6px to the boxes below (was 16px) */
+
+/* ==== v6 (Aqil, 2026-11-03): the inbox's compact layout (ldrInbox.css "v6"), same values ==== */
+.ss-queue { width: 250px; padding: 10px 4px 14px 4px; } /* v6c: sides 4 / 4 */
+.ss-card { padding: 5px 4px 4px 7px; margin-bottom: 5px; }
+.ss-age { padding-left: 4px; padding-right: 4px; }
+.ss-tag { padding-left: 5px; padding-right: 5px; }
+.ss-filter-row { gap: 4px; }
+.ss-filter { padding: 2px 0; }
+.ss-sort-btn { padding: 2px 1px 2px 5px; height: 26px; box-sizing: border-box; }
+.ss-detail { padding: 10px 3px 8px 6px; } /* v6c: right 3, left 6 */
+/* v6c: columns and the cards in them 6px apart (were 18 / 14) */
+.ss-grid { gap: 6px; }
+.ss-col { gap: 6px; }
+.ss-name-row { gap: 5px; }
+.ss-actions-float { max-width: 80%; gap: 5px; }
+/* v6e: name, then the buttons in all the space beside it (wrapping there; below the name when under 45% is left), then
+   lines 1 and 2 full width (Current Tab on line 2). Only 3 buttons here, so they rarely wrap. */
+.ss-head { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 16px; }
+.ss-head > .ss-name-row { order: 1; flex: 0 0 auto; max-width: 100%; }
+.ss-head > .ss-actions-float { order: 2; float: none; flex: 1 1 0; min-width: 45%; max-width: none; margin: 0 0 6px; }
+.ss-head > .ss-line { order: 3; flex: 0 0 100%; }
+.ss-btn { padding-left: 5px; padding-right: 5px; }
+.ss-status-btn { padding-left: 5px; padding-right: 5px; }
+.ss-panel { padding: 10px; }
+
+/* ==== v6f1 (Aqil, 2026-11-04): the inbox's v6f1 values (ldrInbox.css "v6f1") ==== */
+.ss-queue { padding: 7px 2px 7px 7px; }
+.ss-card { padding: 5px 3px 3px 4px; margin-bottom: 6px; }
+.ss-age { padding-top: 1px; padding-bottom: 1px; }
+.ss-group-head:not(.ss-group-head-first) { margin-top: 10px; }
+.ss-detail { padding: 7px; }
+.ss-grid { gap: 7px; }
+.ss-col { gap: 7px; }
+.ss-panel { padding: 7px; }
+.ss-panel-title.ss-panel-title-gap { margin-bottom: 6px; }
+.ss-head { column-gap: 6px; }
+.ss-name-row { gap: 6px; }
+.ss-actions-float { gap: 6px; }
+.ss-actions-float .ss-btn { height: 30px; padding-top: 1px; padding-bottom: 1px; box-sizing: border-box; display: inline-flex; align-items: center; }
+.ss-banner-ok, .ss-banner-warn { padding: 5px 7px; }
+.ss-alerts .ss-banner-ok, .ss-alerts .ss-banner-warn { margin-bottom: 5px; }
+.ss-dismissable { padding-right: 25px; }
+.ss-dismiss { top: 3px; right: 4px; width: 20px; }
+
+/* ==== v6f7: header buttons 4px sides, as on the inbox (were 5) ==== */
+.ss-actions-float .ss-btn { padding-left: 4px; padding-right: 4px; }

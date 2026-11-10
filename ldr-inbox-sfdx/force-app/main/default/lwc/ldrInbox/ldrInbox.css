@@ -1,0 +1,2329 @@
+:host {
+    --green: #4A6D22;
+    --green-dark: #4A6D22;
+    --green-bg: #F0F8E8;
+    --ink: #292929;
+    --ink-2: #3D3D3D;
+    --muted: #707070;
+    --line: #D8D8D8;
+    --line-2: #C2C2C2;
+    --warn-bg: #F4EFDF;
+    --warn-line: #C6C1B0;
+    --warn-ink: #292929;
+    --err-bg: #FBEBED;
+    --err-line: #E8A0AA;
+    --err-ink: #C8102E;
+    --accent: #74A63A;
+    --accent-2: #9DCE64;
+    --link: #00798F;
+    --page: #F4F2ED;
+    --sans: 'Source Sans 3', 'Trebuchet MS', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --serif: 'Source Serif 4', Georgia, serif;
+    display: block;
+    color: var(--ink);
+    font-family: var(--sans);
+    letter-spacing: 0.1px;
+}
+
+button {
+    font-family: inherit;
+}
+
+.ldr-shell {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 600px;
+    overflow: hidden;
+    /* v6: no zoom (#162's 0.9 removed), so the vh heights inside the shell are plain again */
+    height: calc(100vh - 12.5rem);
+}
+
+/* header */
+.ldr-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--line);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.ldr-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.ldr-pill {
+    font-size: 12.5px;
+    color: #3D3D3D;
+    background: #EBEBEB;
+    padding: 6px 10px;
+    border-radius: 0;
+}
+/* version label (admins): the pills' text size, plain black text */
+.ldr-version {
+    font-size: 12.5px;
+    letter-spacing: 0.2px;
+    color: #000000;
+}
+.ldr-pill-live {
+    color: var(--green-dark);
+    background: var(--green-bg);
+    font-weight: 600;
+}
+
+/* tabs */
+/* canvas #144: three columns, the Salesforce search in the centre (the side groups keep their width) */
+.ldr-tabbar {
+    display: grid;
+    grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+    align-items: end;
+    column-gap: 22px;
+    position: relative;
+    padding: 12px 24px 0;
+    border-bottom: 1px solid var(--line);
+}
+.ldr-tabs-left { justify-self: start; }
+.ldr-tabs-right { justify-self: end; align-items: flex-end; }
+.ldr-tabs {
+    display: flex;
+    gap: 22px;
+}
+.ldr-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0 0 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-2);
+    cursor: pointer;
+}
+.ldr-tab-on {
+    font-weight: 600;
+    color: var(--green-dark);
+    border-bottom-color: var(--green);
+}
+.ldr-count {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 0;
+    background: var(--line);
+    color: var(--ink-2);
+}
+.ldr-count-on {
+    background: var(--green);
+    color: #fff;
+}
+.ldr-chips {
+    display: flex;
+    gap: 6px;
+    padding-bottom: 10px;
+}
+.ldr-chips-wrap {
+    flex-wrap: wrap;
+    padding-bottom: 12px;
+}
+.ldr-chip {
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 11px;
+    border-radius: 0;
+    border: 1.5px solid var(--line-2);
+    background: #fff;
+    color: var(--ink-2);
+    cursor: pointer;
+}
+
+/* body */
+.ldr-body {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+.ldr-queue {
+    position: relative;
+    width: 340px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    padding: 14px 14px 14px 24px;
+    box-sizing: border-box;
+}
+.ldr-empty {
+    font-size: 14px;
+    color: var(--muted);
+    padding: 24px 4px;
+}
+.ldr-row {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-left-width: 4px;
+    border-radius: 0;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+.ldr-row-on {
+    background: #F0F8E8;
+    border-color: var(--green);
+}
+.ldr-row.ldr-type-contractor {
+    border-left-color: #C6C1B0;
+}
+.ldr-row.ldr-type-architect {
+    border-left-color: #00798F;
+}
+.ldr-row.ldr-type-business {
+    border-left-color: #47647D;
+}
+.ldr-row.ldr-type-homeowner,
+.ldr-row.ldr-type-unknown {
+    border-left-color: var(--line-2);
+}
+.ldr-row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.ldr-row-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+.ldr-row-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 5px 0;
+}
+.ldr-row-claim {
+    font-weight: 600;
+    color: var(--ink-2);
+}
+.ldr-age {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 0;
+    background: #EBEBEB;
+    color: #3D3D3D;
+}
+.ldr-age-warn {
+    background: #F4EFDF;
+    color: #292929;
+}
+.ldr-age-late {
+    background: #FBEBED;
+    color: #C8102E;
+}
+
+/* tags */
+.ldr-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 0;
+    background: #EBEBEB;
+    color: var(--muted);
+}
+.ldr-tag.ldr-type-contractor {
+    background: #F4EFDF;
+    color: #292929;
+}
+.ldr-tag.ldr-type-architect {
+    background: #E6F2F4;
+    color: #00798F;
+}
+.ldr-tag.ldr-type-business {
+    background: #F5F5F5;
+    color: #3D3D3D;
+}
+.ldr-tag.ldr-type-homeowner {
+    background: #F5F5F5;
+    color: var(--ink-2);
+}
+.ldr-tag-related {
+    background: #F5F5F5;
+    color: #3D3D3D;
+}
+
+/* detail */
+.ldr-detail {
+    flex: 1;
+    overflow-y: auto;
+    background: #F4F2ED;
+    padding: 20px 24px;
+    box-sizing: border-box;
+}
+.ldr-d-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.ldr-d-name {
+    font-size: 19px;
+    font-weight: 600;
+}
+.ldr-d-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.ldr-muted {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 3px;
+}
+.ldr-small {
+    font-size: 12.5px;
+}
+.ldr-strong {
+    font-weight: 600;
+}
+.ldr-nowrap {
+    white-space: nowrap;
+    margin-left: 12px;
+}
+.ldr-outreach {
+    color: #00798F;
+    margin-top: 3px;
+}
+.ldr-warn-text {
+    color: #292929;
+}
+
+/* buttons */
+.ldr-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    background: #fff;
+    border: 1px solid var(--line-2);
+    color: var(--ink-2);
+    padding: 0 14px;
+    border-radius: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+.ldr-btn:hover {
+    text-decoration: none;
+    background: #F5F5F5;
+}
+.ldr-btn[disabled] {
+    opacity: 0.55;
+    cursor: default;
+}
+/* canvas #137: Convert / Hand-Off in the Estimate tab's selected-frame colours (10:1); faded while there are unsaved changes */
+.ldr-btn.ldr-btn-handoff,
+.ldr-btn.ldr-btn-handoff:hover { background: #F0F8E8; border: 1.5px solid #4A6D22; color: #194D19; font-size: 14px; font-weight: 600; }
+.ldr-btn.ldr-btn-handoff[disabled] { cursor: not-allowed; }
+.ldr-btn-primary {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+}
+.ldr-btn-primary:hover {
+    background: var(--green-dark);
+}
+.ldr-btn-outline {
+    border-color: var(--green);
+    color: var(--green-dark);
+}
+.ldr-btn-small {
+    min-height: 30px;
+    padding: 0 12px;
+}
+.ldr-btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+.ldr-grow {
+    flex: 1;
+}
+.ldr-link-btn {
+    background: none;
+    border: none;
+    padding: 6px 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+}
+.ldr-link-green {
+    color: var(--green-dark);
+}
+.ldr-badge {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+    background: #EBEBEB;
+    padding: 8px 12px;
+    border-radius: 0;
+}
+.ldr-badge-mine {
+    color: var(--green-dark);
+    background: var(--green-bg);
+}
+
+/* banners & cards */
+.ldr-banner {
+    border-radius: 0;
+    padding: 11px 14px;
+    font-size: 14px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+}
+.ldr-banner-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+.ldr-banner-warn {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-line);
+    color: var(--warn-ink);
+}
+.ldr-banner-error {
+    background: var(--err-bg);
+    border: 1px solid var(--err-line);
+    color: var(--err-ink);
+    margin: 12px 24px 0;
+}
+.ldr-detail .ldr-banner-error {
+    margin: 0 0 14px;
+}
+.ldr-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+.ldr-col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.ldr-col .ldr-banner {
+    margin-bottom: 0;
+}
+.ldr-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 0;
+    padding: 16px;
+    margin-bottom: 0;
+}
+.ldr-detail > .ldr-card {
+    margin-bottom: 16px;
+}
+.ldr-card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
+}
+.ldr-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 16px;
+}
+.ldr-tracking {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px 16px;
+}
+.ldr-fact-k {
+    font-size: 11px;
+    color: var(--muted);
+}
+.ldr-fact-v {
+    font-size: 14px;
+    font-weight: 600;
+    word-break: break-word;
+}
+.ldr-fact-empty {
+    color: #707070;
+}
+.ldr-comments {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #F5F5F5;
+}
+.ldr-comment-text {
+    font-size: 14px;
+    line-height: 1.55;
+    white-space: pre-line;
+}
+.ldr-attachments {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.ldr-card-related {
+    background: #F5F5F5;
+    border-color: #D8D8D8;
+}
+.ldr-related-title {
+    color: #3D3D3D;
+}
+.ldr-related-row {
+    width: 100%;
+    text-align: left;
+    background: #fff;
+    border: 1px solid #D8D8D8;
+    border-radius: 0;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+}
+.ldr-links {
+    display: flex;
+    gap: 14px;
+    margin-top: 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    align-items: center;
+}
+.ldr-links a {
+    color: #00798F; /* #123: links are teal */
+}
+.ldr-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+/* Live-region wrapper around the toast: no box of its own, so the empty wrapper adds no flex gap. */
+.ldr-live {
+    display: contents;
+}
+.ldr-field-v {
+    font-size: 14px;
+    font-weight: 600;
+}
+.ldr-toast {
+    font-size: 12.5px;
+    color: var(--green-dark);
+    background: var(--green-bg);
+    border-radius: 0;
+    padding: 8px 10px;
+}
+
+/* v6: 1080px (was 1100px), so the record detail stays in two columns down to a 1045px inbox */
+@media (max-width: 1080px) {
+    .ldr-grid {
+        grid-template-columns: 1fr;
+    }
+    .ldr-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .ldr-tracking {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* matched account */
+.ldr-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+.ldr-match-top {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+.ldr-pill-outline {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    border: 1px solid var(--line-2);
+    border-radius: 0;
+    padding: 3px 8px;
+}
+.ldr-match-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.ldr-stat {
+    font-size: 14px;
+    font-weight: 600;
+}
+.ldr-competitor {
+    font-size: 11px;
+    font-weight: 600;
+    color: #C8102E;
+    margin-bottom: 10px;
+}
+.ldr-strong-k {
+    font-weight: 600;
+    color: var(--ink-2);
+    margin-bottom: 8px;
+}
+
+.ldr-banner-top {
+    margin: 12px 24px 0;
+}
+
+.ldr-banner-info {
+    background: #E6F2F4;
+    border: 1px solid #6CA6C4;
+    color: #00798F;
+}
+.ldr-banner-text {
+    margin-bottom: 8px;
+}
+.ldr-tag-info {
+    background: #E6F2F4;
+    color: #00798F;
+}
+.ldr-error-text {
+    color: #C8102E;
+    margin-top: 2px;
+}
+
+/* email preview */
+.ldr-email-preview {
+    margin-bottom: 14px;
+}
+.ldr-preview-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.ldr-preview-body {
+    border: 1px solid var(--line);
+    border-radius: 0;
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+/* timelines */
+.ldr-hint-line {
+    margin: -6px 0 12px;
+}
+.ldr-timeline-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #F5F5F5;
+    font-size: 14px;
+}
+.ldr-timeline-row:last-child {
+    border-bottom: none;
+}
+
+/* pre-conversion */
+.ldr-pre-conversion {
+    border-top: 1px solid #F5F5F5;
+    padding-top: 12px;
+}
+
+/* search + sort */
+.ldr-search-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+/* canvas #128: native search box; teal outline + fill while it filters the list, × clears it */
+.ldr-search { flex: 1 1 auto; min-width: 0; padding: 7px 10px; border: 1px solid #707070; background: #fff; border-radius: 0; font-size: 14px; font-family: inherit; color: #292929; }
+.ldr-search.ldr-search-on { padding: 6px 9px; border: 2px solid #00798F; background: #E6F2F4; }
+.ldr-search-clear { flex-shrink: 0; width: 32px; height: 32px; padding: 0; font-size: 19px; line-height: 1; cursor: pointer; background: #fff; color: #00798F; border: 1.5px solid #00798F; border-radius: 0; font-weight: 600; }
+.ldr-tag-alert {
+    background: #FBEBED;
+    color: #C8102E;
+}
+.ldr-banner-alert {
+    background: #FBEBED;
+    border: 1px solid #E8A0AA;
+    color: #C8102E;
+}
+.ldr-banner-neutral {
+    background: #EBEBEB;
+    border: 1px solid #C2C2C2;
+    color: var(--ink-2);
+}
+.ldr-fields {
+    min-width: 0;
+}
+.ldr-min0 {
+    min-width: 0;
+}
+
+/* related + opportunities */
+.ldr-related-head {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 3px;
+}
+.ldr-related-right {
+    text-align: right;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+.ldr-opp {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: #fff;
+    border: 1px solid #F5F5F5;
+    border-left-width: 3px;
+    border-radius: 0;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.ldr-opp-open { border-left-color: #00798F; }
+.ldr-opp-won { border-left-color: var(--green); }
+.ldr-opp-lost { border-left-color: #C8102E; }
+.ldr-opp-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.ldr-opp-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+.ldr-stage {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 0;
+    white-space: nowrap;
+}
+.ldr-stage-open { background: #E6F2F4; color: #00798F; }
+.ldr-stage-won { background: var(--green-bg); color: #194D19; }
+.ldr-stage-lost { background: #FBEBED; color: #C8102E; }
+
+/* activity */
+.ldr-activity-row {
+    border-left: 3px solid var(--line-2);
+    padding: 4px 0 4px 8px;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+.ldr-activity-person { border-left-color: var(--green); }
+.ldr-pill-auto {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 0;
+    background: #EBEBEB;
+    color: #707070;
+    margin-left: 6px;
+}
+
+.ldr-profiler {
+    width: 100%;
+    height: 900px; /* fixed: the Visualforce page is cross-origin (*.vf.force.com), so it can't size itself */
+    border: 1px solid var(--line);
+    border-radius: 0;
+}
+
+/* ---- prototype 1790891907-83a2 ---- */
+.ldr-record-icon {
+    flex-shrink: 0;
+}
+.ldr-tag.ldr-campaign-competitor {
+    background: #F4EFDF;
+    color: #292929;
+}
+.ldr-tag.ldr-campaign-branded {
+    background: #F0F8E8;
+    color: #194D19;
+}
+.ldr-tag.ldr-campaign-windfall {
+    background: #E6F2F4;
+    color: #00798F;
+}
+.ldr-campaign-card {
+    border-left: 4px solid #C2C2C2;
+    border-radius: 0;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.ldr-campaign-card-competitor {
+    border-left-color: #C6C1B0;
+    background: #F4EFDF;
+    color: #292929;
+}
+.ldr-campaign-card-branded {
+    border-left-color: #4A6D22;
+    background: #F0F8E8;
+    color: #194D19;
+}
+.ldr-campaign-card-windfall {
+    border-left-color: #00798F;
+    background: #E6F2F4;
+    color: #00798F;
+}
+.ldr-utm-content {
+    margin-top: 10px;
+}
+.ldr-att-thumb {
+    width: 100px;
+    height: 74px;
+    object-fit: cover;
+    border-radius: 0;
+    background: #EBEBEB;
+    display: block;
+}
+.ldr-att-pdf {
+    width: 100px;
+    height: 74px;
+    border-radius: 0;
+    background: #FBEBED;
+    border: 1px solid #E8A0AA;
+    box-sizing: border-box;
+    color: #C8102E;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.ldr-att-pdf-big {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+.ldr-att-pdf-sub {
+    font-size: 11px;
+    margin-top: 2px;
+}
+.ldr-collapse-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+}
+.ldr-collapse-head .ldr-card-title {
+    margin-bottom: 0;
+    font-size: 14px;
+    color: #3D3D3D;
+}
+.ldr-collapse-head {
+    padding: 6px 0;
+    gap: 10px;
+}
+.ldr-collapse-arrow {
+    font-size: 24px;
+    line-height: 1;
+    color: #292929;
+    width: 20px;
+    text-align: center;
+}
+.ldr-pre-conversion lightning-record-edit-form {
+    display: block;
+    margin-top: 10px;
+}
+.ldr-hidden {
+    display: none;
+}
+.ldr-campaign-kicker {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.ldr-att-hint {
+    margin-top: 10px;
+}
+.ldr-saving {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #4A6D22;
+    background: #F0F8E8;
+    border-radius: 0;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ldr-saving-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #4A6D22;
+    animation: ldr-pulse 0.9s ease-in-out infinite;
+}
+@keyframes ldr-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.35;
+    }
+}
+
+/* ---- prototype 1790900199-c34a ---- */
+.ldr-banner-converted {
+    background: #FBEBED;
+    border: 1px solid #C8102E;
+    border-left: 4px solid #C8102E;
+    color: #C8102E;
+    border-radius: 0;
+    padding: 11px 14px;
+    margin-bottom: 14px;
+}
+.ldr-converted-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #C8102E;
+}
+.ldr-account-link {
+    font-weight: 600;
+    color: #00798F;
+    text-decoration: underline;
+    padding: 0;
+}
+.ldr-copp {
+    border: 1px solid #F5F5F5;
+    border-radius: 0;
+    padding: 10px 12px;
+    margin-top: 8px;
+}
+.ldr-copp-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 6px;
+}
+.ldr-comment-text:empty {
+    min-height: 18px;
+}
+
+/* ---- prototype 1790959404-cce2 ---- */
+.ldr-sort-select {
+    background: #fff;
+    border: 1px solid #707070;
+    color: #3D3D3D;
+    padding: 7px 10px;
+    border-radius: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* ---- prototype 1790971936-e17c ---- */
+.ldr-tag-assigned {
+    background: #F5F5F5;
+    color: #3D3D3D;
+}
+.ldr-banner-assigned {
+    background: #F5F5F5;
+    border: 1px solid #D8D8D8;
+    color: #3D3D3D;
+    border-radius: 0;
+    padding: 11px 14px;
+    font-size: 14px;
+    margin-bottom: 14px;
+}
+.ldr-banner-unlinked {
+    background: #E6F2F4;
+    border: 1px solid #6CA6C4;
+    color: #00798F;
+    border-radius: 0;
+    padding: 11px 14px;
+    font-size: 14px;
+    margin-bottom: 14px;
+}
+.ldr-copp-won {
+    border-left: 3px solid #4A6D22;
+}
+.ldr-copp-lost {
+    border-left: 3px solid #C8102E;
+}
+.ldr-copp-open {
+    border-left: 3px solid #00798F;
+}
+.ldr-person-preview {
+    color: #3D3D3D;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ldr-task-link {
+    color: #292929;
+    text-decoration: underline;
+    font-weight: 400;
+    padding: 0;
+    text-align: left;
+}
+
+/* ---- prototype 1790973652-0d1e ---- */
+.ldr-lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.78);
+    z-index: 9000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+}
+.ldr-lightbox-img {
+    max-width: 85%;
+    max-height: 78%;
+    border-radius: 0;
+    cursor: default;
+}
+.ldr-lightbox-label {
+    color: #fff;
+    font-size: 14px;
+    margin-top: 12px;
+}
+.ldr-lightbox-close {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 19px;
+    cursor: pointer;
+}
+.ldr-unlinked-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 0;
+    background: #E6F2F4;
+    border: 1.5px dashed #00798F;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.ldr-quick-edit {
+    margin: 0 0 14px 58px;
+    background: #F4F2ED;
+    border: 1px solid #D8D8D8;
+    border-radius: 0;
+    padding: 12px 14px;
+}
+/* canvas #137 / #138: labelled fields in rows, Mailing Address with Address Search, Cancel / Save bottom right */
+.ldr-qe-form { display: block; }
+.ldr-qe-row1 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+.ldr-qe-address { display: block; margin-bottom: 12px; }
+.ldr-qe-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+.ldr-qe-actions .ldr-btn-small { padding: 0 14px; }
+.ldr-qe-error { font-size: 11px; color: #C8102E; margin-right: auto; }
+.ldr-unlinked-hint {
+    margin-top: 8px;
+    opacity: 0.85;
+}
+.ldr-comment-big {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+}
+.ldr-showroom {
+    margin-top: 12px;
+    background: #F5F5F5;
+    border-radius: 0;
+    padding: 9px 12px;
+    font-size: 12.5px;
+    color: #3D3D3D;
+}
+.ldr-att-tile {
+    position: relative;
+    width: 100px;
+}
+.ldr-att-thumb-btn {
+    display: block;
+    width: 100px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: zoom-in;
+}
+.ldr-att-other {
+    width: 100px;
+    height: 74px;
+    border-radius: 0;
+    background: #EBEBEB;
+    border: 1px dashed #C2C2C2;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #707070;
+}
+.ldr-att-download {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 0;
+    background: rgba(26, 26, 26, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ldr-att-name-link {
+    display: block;
+    font-size: 11px;
+    color: #3D3D3D;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---- prototype 1790982372-7622 ---- */
+.ldr-lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #fff;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 19px;
+    cursor: pointer;
+}
+.ldr-lightbox-prev {
+    left: 20px;
+}
+.ldr-lightbox-next {
+    right: 20px;
+}
+.ldr-lightbox-pos {
+    color: #C2C2C2;
+    font-size: 12.5px;
+    margin-top: 3px;
+}
+
+/* ---- prototype 1790985648-e091 ---- */
+.ldr-banner-decided {
+    background: #FBEBED;
+    border: 1px solid #C8102E;
+    border-left: 4px solid #C8102E;
+    color: #C8102E;
+    border-radius: 0;
+    padding: 11px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 14px;
+}
+.ldr-collapse-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.ldr-collapse-row .ldr-collapse-head {
+    flex-grow: 1;
+}
+/* Image attachments get bigger tiles than PDFs / other files. */
+.ldr-att-tile:has(.ldr-att-thumb-btn) {
+    width: 200px;
+}
+.ldr-att-thumb-btn,
+.ldr-att-thumb-btn .ldr-att-thumb {
+    width: 200px;
+}
+.ldr-att-thumb-btn .ldr-att-thumb {
+    height: 148px;
+}
+
+/* prototype 1791241808-c0f3: dismissable alerts, unsaved indicator */
+.ldr-dismissable { position: relative; padding-right: 36px; }
+.ldr-dismiss { position: absolute; top: 6px; right: 8px; width: 24px; height: 24px; border: 0; background: transparent; color: inherit; opacity: .65; font-size: 19px; line-height: 1; cursor: pointer; padding: 0; }
+.ldr-dismiss:hover, .ldr-dismiss:focus { opacity: 1; }
+.ldr-unsaved { font-size: 11px; color: #292929; margin-right: auto; }
+.ldr-save-row { align-items: center; }
+
+/* prototype 1791332457-946d */
+.ldr-tag-openopp { background: #E6F2F4; color: #00798F; }
+.ldr-viewas { font-weight: 400; }
+.ldr-viewas-select {
+    font-size: 12.5px; font-weight: 600; color: #292929; background: #fff;
+    border: 1px solid #707070; border-radius: 0; padding: 2px 8px; cursor: pointer;
+}
+.ldr-viewas-banner {
+    background: #E6F2F4; color: #00798F; font-size: 12.5px; padding: 7px 24px; border-bottom: 1px solid #B9D6E3;
+}
+.ldr-filter-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.ldr-filter { flex: 1 1 0; min-width: 0; padding: 6px; }
+.ldr-sort-btn {
+    flex-shrink: 0; display: flex; align-items: center; gap: 4px; background: #fff; border: 1px solid #C2C2C2;
+    color: #3D3D3D; padding: 6px 10px; border-radius: 0; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.ldr-sort-arrow { font-size: 14px; line-height: 1; }
+.ldr-overlay {
+    position: fixed; inset: 0; background: rgba(17, 24, 39, 0.45); z-index: 9100;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.ldr-dialog {
+    background: #fff; border-radius: 0; max-width: 440px; width: 100%; padding: 20px 22px;
+    border: 1px solid #D8D8D8; position: relative; /* #123: no shadows; dialogs get a 1px border */
+}
+.ldr-dialog-wide { max-width: 560px; max-height: 80vh; overflow: auto; }
+.ldr-dialog-text { font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
+.ldr-dialog-btns { display: flex; justify-content: flex-end; gap: 8px; }
+.ldr-dialog-close {
+    position: absolute; top: 10px; right: 12px; border: none; background: transparent; font-size: 19px;
+    cursor: pointer; color: #707070; font-weight: 600;
+}
+.ldr-dialog-title { font-size: 16px; font-weight: 600; margin: 4px 30px 6px 0; }
+.ldr-dialog-body {
+    font-size: 14px; line-height: 1.55; white-space: pre-line; background: #F4F2ED; border: 1px solid #F5F5F5;
+    border-radius: 0; padding: 10px 12px; margin: 12px 0;
+}
+button.ldr-activity-row {
+    display: flex; gap: 9px; align-items: flex-start; width: 100%; text-align: left; background: none;
+    border-top: none; border-right: none; border-bottom: none; cursor: pointer;
+}
+.ldr-activity-icon { flex-shrink: 0; margin-top: 1px; }
+.ldr-activity-meta { display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+.ldr-coord-fields { display: flex; flex-direction: column; gap: 8px; }
+.ldr-lead-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 10px; margin-bottom: 8px; }
+/* #160: Create Lead popup. Line 3 is Lead Status | Customer Type | Company; the address (with Address Search) under it. */
+.ldr-dialog.ldr-dialog-lead { max-width: 640px; }
+.ldr-lead-grid.ldr-lead-grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ldr-lead-address { display: block; margin-bottom: 4px; }
+.ldr-pop-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.ldr-pop-head .ldr-pop-title { margin-bottom: 2px; }
+.ldr-pop-head .ldr-dialog-close { position: static; flex-shrink: 0; }
+.ldr-admin-note { font-size: 11px; color: #00798F; background: #E6F2F4; border-radius: 0; padding: 6px 9px; }
+.ldr-openopp-caption {
+    font-size: 12.5px; color: #00798F; background: #E6F2F4; border-radius: 0; padding: 7px 10px; margin-bottom: 10px;
+}
+.ldr-nowrap { white-space: nowrap; }
+
+/* prototype 1791413716-c90e */
+.ldr-row.ldr-type-homeowner { border-left-color: #6CA6C4; }
+.ldr-tag.ldr-type-homeowner { background: #E6F2F4; color: #00798F; }
+.ldr-boss-banner {
+    background: #F5F5F5; color: #3D3D3D; font-size: 12.5px; padding: 7px 24px; border-bottom: 1px solid #D8D8D8;
+}
+/* Inquiry Type tags: Outlook flag colours */
+.ldr-tag.ldr-inq-quote { background: #74A63A; color: #194D19; }
+.ldr-tag.ldr-inq-consultation { background: #D6CFBC; color: #292929; }
+.ldr-tag.ldr-inq-estimate { background: #C8102E; color: #292929; }
+.ldr-tag.ldr-inq-contactus { background: #6CA6C4; color: #00798F; }
+.ldr-tag.ldr-inq-lunch { background: #D8D8D8; color: #47647D; }
+.ldr-tag.ldr-inq-design { background: #6CA6C4; color: #00798F; }
+.ldr-tag.ldr-inq-rep { background: #C2C2C2; color: #292929; }
+.ldr-tag.ldr-inq-other { background: #D8D8D8; color: #3D3D3D; }
+/* person grouping */
+.ldr-group-pill {
+    font-weight: 600; color: #3D3D3D; background: #F5F5F5; border: 1px solid #D8D8D8; border-radius: 0; padding: 1px 8px;
+}
+.ldr-row-child {
+    display: block; width: calc(100% - 22px); margin-left: 22px; text-align: left; background: #fff;
+    border: 1px solid var(--line); border-left: 3px solid #D8D8D8; border-radius: 0; padding: 8px 11px;
+    margin-bottom: 8px; cursor: pointer;
+}
+.ldr-row-child.ldr-row-on { background: #F0F8E8; border-color: #4A6D22; border-left-color: #D8D8D8; }
+.ldr-child-preview { font-size: 11px; color: #3D3D3D; margin-top: 5px; line-height: 1.35; }
+.ldr-related-more { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+.ldr-fact-link { font-size: 14px; font-weight: 600; color: #00798F; text-decoration: underline; text-align: left; padding: 0; }
+
+/* prototype 1791477589-9853 */
+.ldr-copy-host { position: fixed; left: -10000px; top: 0; width: 700px; background: #fff; }
+.ldr-dialog-flow { max-width: 760px; max-height: 88vh; overflow: auto; }
+/* canvas #129: Convert window's Files step (after the flow converts the Lead) */
+.ldr-cv-title { font-size: 16px; font-weight: 600; margin: 4px 0; }
+.ldr-cv-text { font-size: 12.5px; color: #3D3D3D; }
+.ldr-cv-label { font-size: 12.5px; color: #707070; margin: 12px 0 6px; }
+.ldr-cv-upload { border: 1.5px dashed #9EA2A2; padding: 10px 12px; margin-top: 6px; }
+.ldr-cv-foot { display: flex; justify-content: flex-end; gap: 8px; padding-top: 12px; margin-top: 12px; border-top: 1px solid #D8D8D8; }
+.ldr-cv-done { padding: 7px 18px; font-size: 14px; cursor: pointer; background: #4A6D22; color: #fff; border: 1.5px solid #4A6D22; border-radius: 0; font-weight: 600; }
+/* canvas #119: Attach to Opportunity window (v5.7: the button is on the Hand-off line, styled like Convert/Hand-off) */
+.ldr-dialog-attach { max-width: 640px; }
+.ldr-flow-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.ldr-flow-foot { margin-top: 10px; }
+.ldr-email-details { margin-top: 10px; padding-top: 10px; border-top: 1px solid #F5F5F5; }
+.ldr-email-extra { margin-bottom: 8px; }
+.ldr-email-rows { border-top: 1px solid #C2C2C2; padding-top: 6px; }
+.ldr-email-row { display: flex; gap: 14px; padding: 1px 0; }
+.ldr-email-k { width: 150px; flex-shrink: 0; color: #707070; }
+.ldr-email-v { white-space: pre-wrap; min-width: 0; overflow-wrap: anywhere; }
+.ldr-ok-text { color: #194D19; }
+.ldr-fact-span2 { grid-column: span 2; min-width: 0; }
+.ldr-fetr { border: 1px solid #C2C2C2; border-radius: 0; overflow: hidden; font-size: 14px; }
+.ldr-fetr-h { background: #C4E2A2; color: #000; font-weight: 600; padding: 4px 8px; border-bottom: 1px solid #292929; }
+.ldr-fetr-h-dark { background: #4A6D22; color: #fff; }
+.ldr-fetr-row { padding: 4px 8px; border-bottom: 1px dotted #707070; overflow-wrap: anywhere; }
+.ldr-pre-line { white-space: pre-line; }
+/* canvas #125: queue card lines (name/date, claimed-still-New, form + type, other flags, claimer, group pill) */
+.ldr-card-top { margin-bottom: 5px; }
+.ldr-card-line { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
+.ldr-card-claim { display: flex; justify-content: flex-end; font-size: 11px; color: #707070; min-width: 0; }
+.ldr-group-foot { display: flex; margin-top: 5px; font-size: 11px; }
+/* canvas #126: Mine section headers (New / Working) */
+.ldr-mine-head { margin: 14px 0 0; }
+.ldr-mine-head-first { margin-top: 2px; }
+.ldr-mine-head .ldr-tier-label { color: #292929; }
+/* canvas #127 / #131A: "Current Tab: Mine" at the right end of the Submitted line */
+.ldr-current-tab { float: right; margin-left: 16px; color: #3D3D3D; font-size: 12.5px; }
+.ldr-current-tab strong { color: #292929; }
+/* canvas #143B: "Go to <Tab> Tab" at the right end of header line 2, under Current Tab */
+.ldr-go-tab { float: right; margin-left: 16px; background: none; border: none; padding: 0; font-family: inherit;
+    font-size: 12.5px; line-height: 20px; font-weight: 600; color: #00798F; text-decoration: underline; cursor: pointer; }
+/* canvas #122: value on the line below its label */
+.ldr-fetr-below { display: block; }
+/* canvas #120: FETR project picklist + match note */
+.ldr-fetr-head { gap: 8px; margin-bottom: 10px; }
+.ldr-fetr-titlegrp { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1 1 auto; }
+.ldr-fetr-titlegrp .ldr-card-title { margin-bottom: 0; }
+.ldr-nowrap { white-space: nowrap; }
+.ldr-noshrink { flex-shrink: 0; }
+.ldr-fetr-project { min-width: 0; max-width: 280px; flex: 1 1 auto; padding: 4px 6px; border: 1px solid #707070; border-radius: 0; font-size: 12.5px; background: #fff; color: #292929; }
+.ldr-fetr-note { font-size: 11px; color: #707070; margin: -4px 0 8px 0; }
+.ldr-fetr-note-warn { color: #8A4B00; }
+.ldr-followup { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.ldr-followup-save { margin-top: 14px; padding-top: 12px; border-top: 1px solid #F5F5F5; }
+
+/* ---- 7c73: Link to existing Lead / Contact ---- */
+.ldr-dialog-link { max-width: 560px; width: 100%; }
+.ldr-link-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+.ldr-link-label { font-size: 11px; font-weight: 600; color: #707070; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+.ldr-link-sugg { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left; background: #F0F8E8; border: 1px solid #C4E2A2; border-radius: 0; padding: 9px 12px; margin-bottom: 6px; cursor: pointer; font: inherit; }
+.ldr-link-kind { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 0; }
+.ldr-link-kind-lead { background: #F0F8E8; color: #194D19; }
+.ldr-link-kind-contact { background: #F5F5F5; color: #3D3D3D; }
+.ldr-link-why { font-size: 12.5px; font-weight: 600; color: #4A6D22; white-space: nowrap; }
+.ldr-link-foot { justify-content: flex-end; }
+/* #160 Link to Existing: only the middle scrolls (Cancel / Link stay at the bottom); each results list caps at 300px */
+.ldr-dialog-link .ldr-link-foot { flex-shrink: 0; margin: 0; padding: 12px 20px 16px; border-top: 1px solid #EBEBEB; }
+.ldr-link-section { display: flex; flex-direction: column; flex-shrink: 0; }
+.ldr-link-sec-label { font-size: 12.5px; font-weight: 600; color: #3D3D3D; margin-bottom: 6px; }
+.ldr-link-input { width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #707070; border-radius: 0; font-size: 14px; font-family: inherit; }
+.ldr-link-sel { display: flex; justify-content: space-between; align-items: center; background: #F5F5F5; padding: 7px 8px 7px 14px; font-size: 14px; }
+.ldr-link-sel.ldr-link-sel-lead { background: #F0F8E8; }
+.ldr-link-sel .ldr-dismiss-plain { color: #707070; font-weight: 600; width: 24px; height: 24px; }
+.ldr-link-results { margin-top: 6px; border: 1px solid #D8D8D8; max-height: 300px; overflow-y: auto; }
+.ldr-link-more { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; background: #F5F5F5; border: none;
+    border-bottom: 1px solid #EBEBEB; padding: 7px 14px; font-family: inherit; font-size: 12.5px; font-weight: 600; color: #00798F; cursor: pointer; }
+.ldr-link-res { border-bottom: 1px solid #EBEBEB; }
+.ldr-link-res-line { display: flex; align-items: stretch; }
+.ldr-link-chev { flex-shrink: 0; width: 34px; background: #fff; border: none; border-right: 1px solid #EBEBEB; font-size: 14px; color: #3D3D3D; cursor: pointer; }
+.ldr-link-res-name { flex: 1 1 auto; min-width: 0; text-align: left; background: #fff; border: none; padding: 8px 12px; cursor: pointer; font-family: inherit; font-size: 14px; }
+.ldr-link-res-name:hover, .ldr-link-chev:hover { background: #F5F5F5; }
+.ldr-link-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; padding: 8px 12px 10px 46px; background: #F5F5F5;
+    font-size: 12.5px; color: #292929; overflow-wrap: anywhere; }
+.ldr-link-dk { display: block; font-size: 11px; color: #707070; }
+.ldr-link-none { padding: 8px 14px; }
+.ldr-link-hint { font-size: 11px; margin-top: 6px; }
+/* #160 Advanced Search: over the link window; the table scrolls inside it (sideways too when narrow) */
+.ldr-overlay.ldr-overlay-top { z-index: 9200; }
+.ldr-dialog.ldr-dialog-adv { max-width: 1100px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.ldr-dialog-adv .ldr-flow-head { flex-shrink: 0; align-items: center; margin: 0; padding: 14px 20px; border-bottom: 1px solid #EBEBEB; }
+.ldr-dialog-adv .ldr-dialog-title { margin: 0; }
+.ldr-dialog-adv .ldr-dialog-close { position: static; }
+.ldr-adv-search { display: flex; gap: 10px; align-items: center; padding: 12px 20px 8px; flex-shrink: 0; }
+.ldr-adv-search .ldr-link-input { flex: 1 1 auto; min-width: 0; padding: 8px 12px; }
+.ldr-adv-error { padding: 0 20px 6px; }
+.ldr-adv-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 20px 12px; }
+.ldr-adv-table { min-width: 980px; }
+.ldr-adv-row { display: grid; grid-template-columns: 64px minmax(0, 1.2fr) minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.1fr) minmax(0, 0.6fr) minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px; padding: 8px; border-bottom: 1px solid #EBEBEB; align-items: center; font-size: 12.5px; color: #292929; overflow-wrap: anywhere; }
+.ldr-adv-row.ldr-adv-headrow { padding: 7px 8px; background: #F5F5F5; border-bottom: 1px solid #D8D8D8; font-size: 11px; font-weight: 600; color: #3D3D3D; position: sticky; top: 0; }
+.ldr-status-btn.ldr-adv-select { font-size: 12.5px; color: #4A6D22; border-color: #4A6D22; }
+.ldr-adv-none { font-size: 14px; color: #707070; padding: 16px 8px; }
+.ldr-adv-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 20px 14px; border-top: 1px solid #EBEBEB; flex-shrink: 0; }
+
+/* ---- canvas a111: Prospects tab ---- */
+.ldr-tag.ldr-inq-configurator { background: #6CA6C4; color: #00798F; }
+.ldr-tag-outbound { background: #F5F5F5; color: #47647D; }
+.ldr-plist-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.ldr-plist { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; background: #fff; border: 1px solid #C2C2C2; color: #3D3D3D; padding: 8px 6px; border-radius: 0; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.ldr-plist-on { background: #F0F8E8; border-color: #4A6D22; color: #194D19; }
+.ldr-plist-count { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 0; background: #D8D8D8; color: #3D3D3D; }
+.ldr-plist-on .ldr-plist-count { background: #4A6D22; color: #fff; }
+.ldr-plist-blurb { line-height: 1.4; margin-bottom: 10px; }
+.ldr-tier-head { margin: 14px 0 6px; }
+.ldr-tier-head-line { display: flex; align-items: center; justify-content: space-between; }
+.ldr-tier-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+.ldr-tier-count { font-weight: 600; color: #707070; letter-spacing: 0; }
+.ldr-tier-hint { font-size: 11px; color: #707070; line-height: 1.35; margin-top: 2px; }
+.ldr-tier-head.ldr-tier-strong .ldr-tier-label { color: #4A6D22; }
+.ldr-tier-head.ldr-tier-worth .ldr-tier-label { color: #292929; }
+.ldr-tier-head.ldr-tier-else .ldr-tier-label { color: #707070; }
+.ldr-pill-btn { background: #fff; border: 1px solid #C2C2C2; color: #3D3D3D; padding: 3px 10px; border-radius: 0; font-size: 11px; font-weight: 600; cursor: pointer; }
+.ldr-pcard { cursor: pointer; background: #fff; border: 1px solid var(--line); border-left: 4px solid #C2C2C2; border-radius: 0; padding: 10px 12px 10px 11px; margin-bottom: 8px; }
+.ldr-pcard.ldr-tier-strong { border-left-color: #4A6D22; }
+.ldr-pcard.ldr-tier-worth { border-left-color: #C6C1B0; }
+.ldr-pcard.ldr-tier-else { opacity: 0.88; }
+.ldr-pcard-on { background: #F0F8E8; border-color: #4A6D22; }
+.ldr-chip-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.ldr-chip { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 0; }
+.ldr-chip-hot { background: #F4EFDF; color: #292929; }
+.ldr-chip-good { background: #F0F8E8; color: #4A6D22; }
+.ldr-chip-info { background: #EBEBEB; color: #3D3D3D; }
+.ldr-chip-warn { background: #F4EFDF; color: #292929; }
+.ldr-pcard-summary { font-size: 12.5px; color: #3D3D3D; margin-top: 6px; line-height: 1.35; }
+.ldr-pcard-actions { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.ldr-pcard-phone { font-size: 12.5px; font-weight: 600; color: #00798F; text-decoration: none; white-space: nowrap; }
+.ldr-hidden-summary { margin-top: 16px; padding: 10px 12px; background: #F4F2ED; border: 1px dashed #C2C2C2; border-radius: 0; font-size: 11px; color: #707070; line-height: 1.5; }
+.ldr-hidden-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.ldr-hidden-row { display: flex; justify-content: space-between; gap: 8px; width: 100%; text-align: left; background: #F4F2ED; border: 1px solid var(--line); border-radius: 0; padding: 7px 10px; margin-top: 6px; font-size: 12.5px; color: #707070; cursor: pointer; }
+/* detail: why this prospect + configurator */
+.ldr-card-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.ldr-why-card { border-left: 4px solid #C2C2C2; }
+.ldr-why-card.ldr-tier-strong { border-left-color: #4A6D22; }
+.ldr-why-card.ldr-tier-worth { border-left-color: #C6C1B0; }
+.ldr-tier-pill { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 0; background: #EBEBEB; color: #3D3D3D; }
+.ldr-tier-pill.ldr-tier-strong { background: #F0F8E8; color: #194D19; }
+.ldr-tier-pill.ldr-tier-worth { background: #F4EFDF; color: #292929; }
+.ldr-why-hidden { font-size: 12.5px; color: #292929; background: #F4EFDF; border-radius: 0; padding: 7px 10px; margin-bottom: 8px; }
+.ldr-why-line { display: flex; gap: 10px; font-size: 14px; line-height: 1.5; padding: 2px 0; }
+.ldr-why-pts { flex-shrink: 0; width: 30px; font-weight: 600; color: #4A6D22; }
+.ldr-why-foot { margin-top: 8px; line-height: 1.4; }
+.ldr-cfg-previews { display: flex; gap: 10px; flex-wrap: wrap; }
+.ldr-cfg-tile { width: 114px; }
+.ldr-cfg-tile-btn { display: block; width: 114px; padding: 0; border: none; background: none; cursor: zoom-in; }
+.ldr-cfg-img { display: block; width: 114px; height: 86px; border-radius: 0; object-fit: cover; background: #EBEBEB; border: 1px solid var(--line); box-sizing: border-box; }
+.ldr-cfg-noimg { width: 114px; height: 86px; border-radius: 0; background: #EBEBEB; border: 1px dashed #C2C2C2; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #707070; box-sizing: border-box; }
+.ldr-cfg-label { font-size: 12.5px; font-weight: 600; color: #3D3D3D; margin-top: 5px; }
+.ldr-cfg-sub { font-size: 11px; color: #707070; }
+.ldr-cfg-note { margin-top: 10px; line-height: 1.45; }
+.ldr-cfg-quotes { margin-top: 14px; border-top: 1px solid #F5F5F5; padding-top: 12px; }
+.ldr-cfg-quote { display: flex; gap: 10px; font-size: 12.5px; padding: 3px 0; align-items: baseline; }
+.ldr-cfg-q-when { width: 52px; flex-shrink: 0; color: #707070; }
+.ldr-cfg-q-model { width: 128px; flex-shrink: 0; font-weight: 600; }
+.ldr-cfg-q-project { flex-grow: 1; min-width: 0; overflow-wrap: anywhere; color: #3D3D3D; }
+.ldr-cfg-file-group { font-size: 11px; font-weight: 600; color: #4A6D22; margin: 10px 0 4px; }
+.ldr-cfg-file { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid #F5F5F5; font-size: 14px; }
+.ldr-cfg-open { flex-shrink: 0; font-size: 12.5px; font-weight: 600; color: #00798F; text-decoration: none; }
+.ldr-lightbox-placeholder { width: 560px; max-width: 80%; height: 360px; border-radius: 0; background: #292929; border: 1px dashed #707070; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #C2C2C2; text-align: center; padding: 0 24px; box-sizing: border-box; }
+.ldr-lightbox-ph-title { font-size: 16px; font-weight: 600; color: #fff; }
+
+/* ---- canvas a111: Boss View tabs, All Submissions, link safety net ---- */
+.ldr-preset { background: #fff; color: #3D3D3D; border: 1px solid #C2C2C2; padding: 4px 9px; border-radius: 0; font-size: 11px; font-weight: 600; cursor: pointer; }
+.ldr-preset-on { background: #194D19; color: #fff; border-color: #194D19; }
+.ldr-date { flex: 1 1 0; min-width: 0; padding: 4px 6px; border: 1px solid #707070; border-radius: 0; font-size: 11px; }
+.ldr-allsub { display: block; width: 100%; text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 0; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+.ldr-allsub-on { background: #F0F8E8; border-color: #4A6D22; }
+.ldr-tag-claimed { background: #F0F8E8; color: #194D19; }
+.ldr-tag-unclaimed { background: #FBEBED; color: #C8102E; }
+.ldr-relink-notice { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #F0F8E8; color: #194D19; font-size: 12.5px; padding: 7px 24px; border-bottom: 1px solid #C4E2A2; }
+.ldr-dismiss-plain { border: none; background: transparent; color: inherit; font-size: 16px; cursor: pointer; }
+.ldr-relink-row { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 0; padding: 9px 10px 9px 14px; }
+
+.ldr-unlinked-match { font-size: 12.5px; color: #00798F; }
+
+/* ---- canvas 55a9: user tabs, Outreach sequence buttons ---- */
+
+/* ---- 6sense outcome (canvas 9fed) ---- */
+.ldr-ce-line { margin-top: 6px; font-size: 12.5px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.ldr-ce-old { opacity: .65; }
+.ldr-ce-tag { display: inline-block; padding: 1px 7px; font-size: 12.5px; font-weight: 600; letter-spacing: .2px; border: 1px solid currentColor; }
+.ldr-ce-note { background: #fff; border: 1px solid #D8D8D8; border-left: 3px solid #6CA6C4; padding: 12px 14px; margin-bottom: 12px; }
+
+
+/* ---- NanaWall brand (LDRInbox-NanaWall artboard): square corners, Source Sans 3 / Source Serif 4 ---- */
+.ldr-shell { border-radius: 0; }
+.ldr-topbar { min-height: 64px; padding: 0 24px; border-bottom: 1px solid #D8D8D8; background: #fff; }
+.ldr-brand { display: flex; align-items: center; gap: 34px; height: 64px; }
+/* canvas #135: the inbox's tabs in the top bar (active: teal 600 with the green underline on the bar's bottom edge) */
+.ldr-top-tabs { display: flex; align-items: center; gap: 22px; height: 64px; }
+.ldr-top-tab { display: flex; align-items: center; height: 64px; box-sizing: border-box; padding: 2px 0 0; margin: 0; background: transparent; border: none; border-bottom: 2px solid transparent; border-radius: 0; font-family: inherit; font-size: 14px; font-weight: 400; letter-spacing: 0.2px; color: #292929; cursor: pointer; white-space: nowrap; }
+.ldr-top-tab-on { font-weight: 600; color: #00798F; border-bottom-color: #74A63A; }
+.ldr-top-tab:focus-visible { outline: 2px solid #00798F; outline-offset: -2px; }
+.ldr-logo { display: block; flex-shrink: 0; }
+.ldr-pill { border-radius: 0; letter-spacing: 0.2px; }
+.ldr-d-name, .ldr-dialog-title { font-family: var(--serif); font-weight: 400; letter-spacing: -0.2px; color: #292929; }
+.ldr-d-name { font-size: 24px; }
+.ldr-card-title { letter-spacing: 0.2px; }
+.ldr-btn { letter-spacing: 0.2px; }
+.ldr-btn-primary { background: #4A6D22; border-color: #4A6D22; }
+.ldr-btn-primary:hover { background: #194D19; border-color: #194D19; }
+.ldr-tab { letter-spacing: 0.2px; }
+.ldr-tab-on { border-bottom-color: #74A63A; }
+a { color: var(--link); }
+
+/* ---- NanaWall brand refinements (LDRInbox-NanaWall artboard, canvas 2de1) ---- */
+/* section titles: sentence case, dark */
+.ldr-card-title { font-size: 12.5px; font-weight: 600; color: #292929; text-transform: none; letter-spacing: 0.2px; }
+/* warning marker replaces the emoji icons */
+/* customer type: icon (or plain text), color only for urgency */
+.ldr-type-icon { margin-right: 6px; }
+.ldr-type-text { font-size: 11px; color: #707070; font-weight: 400; }
+.ldr-row.ldr-type-contractor, .ldr-row.ldr-type-architect, .ldr-row.ldr-type-business,
+.ldr-row.ldr-type-homeowner, .ldr-row.ldr-type-unknown { border-left: 3px solid #C2C2C2; }
+.ldr-age { background: transparent; color: #707070; }
+.ldr-age-warn { background: transparent; color: #292929; }
+.ldr-age-late { background: transparent; color: #C8102E; }
+.ldr-tag-coord { background: #F5F5F5; color: #292929; font-size: 11px; }
+.ldr-tag-alert { background: #fff; color: #C8102E; }
+.ldr-tag-outbound, .ldr-tag-related, .ldr-tag-assigned { background: #F5F5F5; color: #3D3D3D; }
+.ldr-tag-info { background: #F5F5F5; color: #00798F; }
+.ldr-tag-openopp { background: #F5F5F5; color: #292929; }
+.ldr-tag.ldr-campaign-competitor, .ldr-tag.ldr-campaign-branded, .ldr-tag.ldr-campaign-windfall { background: transparent; color: #3D3D3D; border: 1px solid #C2C2C2; }
+/* Inquiry Type tags: the Outlook flag colors the team knows (a deliberate exception to the brand colors) */
+.ldr-tag.ldr-inq-quote { background: #52CE90; color: #0B3D24; border: 1px solid #52CE90; }
+.ldr-tag.ldr-inq-consultation { background: #FDEE65; color: #4A4000; border: 1px solid #FDEE65; }
+.ldr-tag.ldr-inq-contactus { background: #5CA9E5; color: #0B2A44; border: 1px solid #5CA9E5; }
+.ldr-tag.ldr-inq-lunch { background: #B1AAEB; color: #2A2160; border: 1px solid #B1AAEB; }
+.ldr-tag.ldr-inq-estimate { background: #E8825D; color: #3D1505; border: 1px solid #E8825D; }
+.ldr-tag.ldr-inq-design { background: #57D2DA; color: #0A3A3D; border: 1px solid #57D2DA; }
+.ldr-tag.ldr-inq-configurator { background: #7FD1C7; color: #06302C; border: 1px solid #7FD1C7; }
+.ldr-tag.ldr-inq-rep { background: #C5CED1; color: #2B3437; border: 1px solid #C5CED1; }
+.ldr-tag.ldr-inq-other { background: #EBEBEB; color: #3D3D3D; border: 1px solid #EBEBEB; }
+/* banners */
+.ldr-banner-warn { background: #E1DED8; border: 1px solid #C6C1B0; color: #292929; }
+.ldr-banner-decided { background: #fff; border: 1px solid #C8102E; border-left: 3px solid #C8102E; color: #C8102E; font-weight: 600; }
+.ldr-banner-info { background: #F5F5F5; border: 1px solid #C2C2C2; color: #00798F; }
+.ldr-boss-banner { background: #143E30; color: #fff; font-size: 12.5px; padding: 8px 24px; border-bottom: 1px solid #143E30; } /* #135: no tab bar under it any more */
+.ldr-viewas-banner { background: #143E30; color: #fff; border-bottom: 1px solid #143E30; padding: 8px 24px; }
+.ldr-relink-notice .ldr-dismiss-plain { color: #707070; font-weight: 600; }
+/* inbox tabs: light green fill on the active tab */
+.ldr-tab { font-weight: 600; color: #3D3D3D; padding: 0 8px 10px; }
+.ldr-tab-on { color: #292929; background: #F0F8E8; border-bottom-color: #74A63A; }
+.ldr-count { background: #EBEBEB; color: #3D3D3D; }
+.ldr-count-on { background: #4A6D22; color: #fff; }
+/* prospects */
+.ldr-pcard { border-left-width: 3px; padding: 8px 12px 8px 11px; margin-bottom: 6px; }
+.ldr-pcard.ldr-tier-worth { border-left-color: #292929; }
+.ldr-pcard.ldr-tier-else { border-left-color: #D8D8D8; }
+.ldr-chip { font-size: 11px; padding: 1px 6px; border: 1px solid transparent; }
+.ldr-chip-good { background: #F0F8E8; color: #4A6D22; border-color: #74A63A; }
+.ldr-chip-warn { background: #fff; color: #292929; border-color: #C8102E; }
+.ldr-chip-info { background: #fff; color: #404040; border-color: #C2C2C2; }
+.ldr-pcard-summary { font-size: 11px; }
+.ldr-phone-ico { vertical-align: -2px; margin-right: 4px; }
+.ldr-pcard .ldr-btn-primary { min-width: 104px; }
+/* 6sense outcome groups: teal (in a campaign), green (replied: qualified / human review), grey, red */
+.ldr-ce-line { margin-top: 6px; }
+.ldr-ce-line .ldr-ce-tag { border: none; background: transparent; padding: 0; font-size: 11px; }
+.ldr-ce-old { opacity: 0.7; }
+.ldr-ce-note { border-left-width: 1px; padding: 10px 14px; }
+.ldr-ce-note .ldr-card-title { color: inherit; margin-bottom: 4px; }
+.ldr-ce-note .ldr-ce-tag { background: #fff; border: none; }
+/* configurator files: file-type tiles */
+.ldr-cfg-file { justify-content: flex-start; padding: 6px 0; border-bottom: 1px solid #EBEBEB; }
+.ldr-file-tile { width: 36px; height: 36px; box-sizing: border-box; border: 1.5px solid #292929; color: #292929; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; letter-spacing: 0.3px; flex-shrink: 0; }
+.ldr-file-tile-pdf { border-color: #4A6D22; color: #4A6D22; }
+.ldr-file-tile-link { border-color: #00798F; color: #00798F; }
+.ldr-cfg-open { flex-shrink: 0; font-size: 12.5px; font-weight: 600; color: #00798F; text-decoration: none; }
+
+/* ---- canvas 5041 (LDRInbox-NanaWall): fuller brand tones for tags and flags ---- */
+/* customer type: coloured tag + coloured side bar (Contractor orange, Architect blue, Business Owner purple, Homeowner teal) */
+.ldr-row.ldr-type-contractor { border-left: 3px solid #A24E1F; }
+.ldr-row.ldr-type-architect { border-left: 3px solid #3E6E9E; }
+.ldr-row.ldr-type-business { border-left: 3px solid #7C5BA6; }
+.ldr-row.ldr-type-homeowner { border-left: 3px solid #00798F; }
+.ldr-row.ldr-type-unknown { border-left: 3px solid #C2C2C2; }
+.ldr-tag.ldr-type-contractor { background: #A24E1F; color: #fff; }
+.ldr-tag.ldr-type-architect { background: #3E6E9E; color: #fff; }
+.ldr-tag.ldr-type-business { background: #7C5BA6; color: #fff; }
+.ldr-tag.ldr-type-homeowner { background: #00798F; color: #fff; }
+.ldr-tag.ldr-type-unknown { background: #F5F5F5; color: #707070; }
+/* age pill */
+.ldr-age { background: #E3E3E3; color: #3D3D3D; }
+.ldr-age-warn { background: #E0A526; color: #3D2A00; }
+.ldr-age-late { background: #C8102E; color: #fff; }
+/* Inquiry Type: the Outlook flag hues, toned to the NanaWall palette */
+.ldr-tag.ldr-inq-quote { background: #2E8452; color: #fff; border-color: #2E8452; }
+.ldr-tag.ldr-inq-consultation { background: #E8C547; color: #3D2E00; border-color: #E8C547; }
+.ldr-tag.ldr-inq-contactus { background: #2F6DAB; color: #fff; border-color: #2F6DAB; }
+.ldr-tag.ldr-inq-lunch { background: #6556B8; color: #fff; border-color: #6556B8; }
+.ldr-tag.ldr-inq-estimate { background: #B85A2B; color: #fff; border-color: #B85A2B; }
+.ldr-tag.ldr-inq-design { background: #1F7F86; color: #fff; border-color: #1F7F86; }
+.ldr-tag.ldr-inq-configurator { background: #24806F; color: #fff; border-color: #24806F; }
+.ldr-tag.ldr-inq-rep { background: #64727A; color: #fff; border-color: #64727A; }
+.ldr-tag.ldr-inq-other { background: #707070; color: #fff; border-color: #707070; }
+/* row flags */
+.ldr-group-pill { color: #fff; background: #7C5BA6; border-color: #7C5BA6; }
+.ldr-tag-outbound { background: #5B3E9E; color: #fff; }
+.ldr-tag-related { background: #7C5BA6; color: #fff; }
+.ldr-tag-openopp { background: #3E6E9E; color: #fff; }
+.ldr-tag-alert { background: #C8102E; color: #fff; }
+.ldr-tag-info { background: #2F6FA8; color: #fff; }
+.ldr-tag-assigned { background: #F5F5F5; color: #3D3D3D; }
+.ldr-tag.ldr-campaign-windfall, .ldr-tag.ldr-campaign-coldmeta { background: #2F5E9E; color: #fff; border: none; }
+.ldr-tag.ldr-campaign-competitor { background: #E0A526; color: #3D2A00; border: none; }
+.ldr-tag.ldr-campaign-branded { background: #4A6D22; color: #fff; border: none; }
+.ldr-tag-coord { display: inline-block; max-width: 100%; box-sizing: border-box; background: #E0A526; color: #3D2A00; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+/* prospect card flags (up to 5), by kind */
+.ldr-chip-hot { background: #B85A2B; color: #fff; border-color: #B85A2B; }
+.ldr-chip-good { background: #2E8452; color: #fff; border-color: #2E8452; }
+.ldr-chip-warn { background: #E0A526; color: #3D2A00; border-color: #E0A526; }
+.ldr-chip-info { background: #E3E3E3; color: #3D3D3D; border-color: #E3E3E3; }
+/* 6sense: one colour per outcome (colours come from the JS) */
+.ldr-ce-line .ldr-ce-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border: 1px solid transparent; }
+.ldr-ce-sub { font-size: 11px; color: #707070; margin-top: 3px; line-height: 1.3; }
+.ldr-ce-note { background: #fff; border: 1px solid #E0E0E0; border-left: 4px solid #707070; padding: 10px 14px; margin-bottom: 12px; }
+.ldr-ce-note-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.ldr-ce-note-head .ldr-card-title { margin-bottom: 0; color: #292929; }
+.ldr-ce-note-head .ldr-ce-tag { font-size: 11px; font-weight: 600; padding: 1px 7px; border: none; }
+.ldr-ce-note-text { font-size: 14px; color: #292929; line-height: 1.5; }
+
+/* ---- canvas dd24: flag order, junk, detail buttons ---- */
+.ldr-tag { font-size: 11px; font-weight: 600; padding: 2px 7px; }
+.ldr-tag-plain { background: #F5F5F5; color: #3D3D3D; display: inline-flex; align-items: center; }
+.ldr-tag-plain .ldr-type-icon { margin-right: 5px; }
+.ldr-tag-needs { background: #fff; color: #C8102E; }
+.ldr-tag-junk { background: #707070; color: #fff; }
+.ldr-tag.ldr-tag-claimed { background: #F0F8E8; color: #194D19; }
+.ldr-tag.ldr-tag-unclaimed { background: #fff; color: #C8102E; }
+.ldr-age-plain { background: #F5F5F5; color: #3D3D3D; }
+.ldr-tier-label { font-size: 12.5px; text-transform: none; letter-spacing: 0.2px; }
+.ldr-tier-head.ldr-tier-else .ldr-tier-label { color: #707070; }
+/* detail action buttons (canvas: teal outline; release / reassign green outline; submission link sand) */
+.ldr-btn.ldr-btn-teal { background: #fff; color: #00798F; border: 1.5px solid #00798F; }
+.ldr-btn.ldr-btn-teal:hover { background: #E6F2F4; }
+.ldr-btn.ldr-btn-green-outline { background: #fff; color: #4A6D22; border: 1.5px solid #4A6D22; }
+.ldr-btn.ldr-btn-green-outline:hover { background: #F0F8E8; }
+.ldr-d-actions .ldr-btn-outline { background: #E1DED8; color: #292929; border: 1.5px solid #C6C1B0; }
+.ldr-badge-mine { background: #F0F8E8; color: #4A6D22; font-weight: 600; }
+.ldr-junk-wrap { position: relative; }
+.ldr-junk-menu { position: absolute; left: 0; top: 100%; margin-top: 4px; z-index: 30; width: 290px; background: #fff; border: 1px solid #C2C2C2; }
+.ldr-junk-note { padding: 9px 12px; font-size: 11px; color: #707070; border-bottom: 1px solid #EBEBEB; }
+.ldr-junk-item { display: block; width: 100%; text-align: left; padding: 9px 12px; font-size: 12.5px; font-weight: 600; color: #292929; background: #fff; border: none; border-bottom: 1px solid #EBEBEB; cursor: pointer; font-family: inherit; }
+.ldr-junk-item:hover { background: #F5F5F5; }
+.ldr-banner-junk { background: #EBEBEB; border: 1px solid #C2C2C2; color: #292929; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ldr-ce-line { display: block; }
+.ldr-pcard.ldr-tier-strong { border-left: 3px solid #4A6D22; }
+
+/* ==== Canvas dd24 review, 2026-10-14: queue column, header bar, banners ==== */
+.ldr-pill { background: #F5F5F5; }
+.ldr-pill-live { background: #F0F8E8; color: #4A6D22; }
+.ldr-link-btn.ldr-link-teal { color: #00798F; font-weight: 600; text-decoration: underline; }
+.ldr-relink-name { font-size: 14px; text-decoration: none; }
+.ldr-relink-x { font-size: 16px; color: #707070; }
+.ldr-filter-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.ldr-sort-btn { background: #fff; color: #00798F; border: 1.5px solid #00798F; font-size: 11px; font-weight: 600; }
+.ldr-row { padding: 8px 12px 8px 11px; margin-bottom: 6px; }
+.ldr-row-child { border-left-color: #C2C2C2; }
+.ldr-child-preview { font-size: 11px; }
+/* All Submissions */
+.ldr-allsub { border-left: 3px solid #D8D8D8; }
+.ldr-allsub-contractor { border-left-color: #F5F5F5; }
+.ldr-allsub-architect, .ldr-allsub-homeowner { border-left-color: #00798F; }
+.ldr-allsub-business { border-left-color: #3D3D3D; }
+.ldr-preset { font-size: 11px; }
+.ldr-preset:not(.ldr-preset-on) { border-color: #D8D8D8; }
+/* fixed-links dialog */
+.ldr-dialog-link .ldr-flow-head { border-bottom: 1px solid #EBEBEB; padding-bottom: 10px; }
+
+/* ==== Canvas dd24 review: prospects ==== */
+.ldr-plist:not(.ldr-plist-on) { border-color: #D8D8D8; }
+.ldr-plist-count { background: #EBEBEB; }
+.ldr-pill-btn { font-size: 11px; }
+.ldr-hidden-summary { background: #F5F5F5; font-size: 11px; }
+.ldr-hidden-row { background: #F5F5F5; border-color: #D8D8D8; font-size: 11px; }
+.ldr-why-card { border-left: 3px solid #D8D8D8; }
+.ldr-why-card.ldr-tier-strong { border-left-color: #4A6D22; }
+.ldr-why-card.ldr-tier-worth { border-left-color: #292929; }
+.ldr-tier-pill { font-size: 11px; background: #F5F5F5; color: #3D3D3D; }
+.ldr-tier-pill.ldr-tier-worth { background: #F5F5F5; color: #292929; }
+.ldr-why-hidden { background: #F5F5F5; color: #292929; }
+.ldr-cfg-quotes { border-top-color: #EBEBEB; }
+.ldr-cfg-noimg { flex-direction: column; gap: 4px; background: #F5F5F5; }
+
+/* ==== Canvas dd24 review: detail header + banners (Batch 3) ==== */
+.ldr-d-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px 16px; margin-bottom: 6px; }
+.ldr-d-name { font-size: 24px; font-weight: 400; color: #292929; }
+.ldr-d-actions { justify-content: flex-end; gap: 6px; }
+.ldr-d-actions .ldr-btn { font-size: 12.5px; }
+.ldr-d-info { margin: 4px 0 16px 58px; }
+.ldr-d-info .ldr-muted { font-size: 12.5px; color: #707070; }
+.ldr-d-info .ldr-outreach { font-size: 11px; color: #00798F; }
+.ldr-badge { background: #F5F5F5; color: #707070; }
+.ldr-unlinked-icon { background: #F5F5F5; border: none; }
+/* banners, canvas colours */
+.ldr-detail .ldr-banner-error { background: #F5F5F5; border: 1px solid #C8102E; color: #C8102E; font-size: 14px; }
+.ldr-btn.ldr-btn-conflict-ok { background: #fff; border: 1px solid #C8102E; color: #C8102E; font-size: 12.5px; font-weight: 600; }
+.ldr-banner-converted { background: #fff; border-left-width: 3px; }
+.ldr-banner-assigned { border-color: #C2C2C2; }
+.ldr-banner-unlinked { background: #F5F5F5; border: 1px solid #C2C2C2; color: #00798F; }
+.ldr-banner-alert { background: #fff; border: 1px solid #C8102E; color: #C8102E; font-size: 14px; }
+/* log a call outcome buttons */
+.ldr-call-oc { font-size: 11px; font-weight: 600; padding: 6px 11px; border: 1.5px solid #C2C2C2; background: #fff; color: #3D3D3D; border-radius: 0; cursor: pointer; font-family: inherit; }
+.ldr-call-oc:hover { border-color: #4A6D22; color: #4A6D22; }
+.ldr-call-oc:disabled { opacity: 0.6; cursor: default; }
+.ldr-email-preview { background: #F4F2ED; border: 1px solid #D8D8D8; }
+.ldr-email-preview .ldr-preview-body { background: #fff; border: 1px solid #D8D8D8; font-size: 14px; }
+.ldr-email-preview .ldr-email-rows { border-top: 1px solid #C2C2C2; }
+.ldr-email-preview .ldr-email-k { color: #707070; }
+.ldr-email-preview .ldr-ok-text { color: #194D19; }
+
+/* ==== Canvas dd24 review: detail body (Batch 4) ==== */
+/* Other submissions / Related submissions: solid green panel, white title, white items */
+.ldr-card.ldr-panel-green { background: #4A6D22; border: 1px solid #4A6D22; }
+.ldr-panel-green .ldr-related-title { color: #fff; font-size: 12.5px; font-weight: 600; }
+.ldr-panel-green .ldr-panel-sub { color: #D0E9B9; font-size: 11px; }
+.ldr-panel-green .ldr-related-row { background: #fff; border: 1px solid #C2C2C2; }
+.ldr-panel-green .ldr-related-row:hover { background: #F0F8E8; }
+.ldr-panel-green .ldr-related-more .ldr-muted { color: #D0E9B9; }
+.ldr-person-kind { font-size: 14px; font-weight: 600; color: #292929; }
+.ldr-person-preview { font-size: 11px; color: #3D3D3D; }
+.ldr-tag.ldr-rel-kind-kbmax { background: #F5F5F5; color: #00798F; font-size: 11px; font-weight: 600; }
+.ldr-tag.ldr-rel-kind-est { background: #F5F5F5; color: #292929; font-size: 11px; font-weight: 600; }
+.ldr-rel-note { font-size: 11px; color: #292929; }
+.ldr-rel-open { font-size: 11px; color: #00798F; font-weight: 600; margin-top: 2px; }
+/* Attachments */
+.ldr-tag.ldr-att-expiry { background: #fff; color: #C8102E; font-size: 11px; font-weight: 600; }
+.ldr-att-pdf { background: #fff; border: 1px solid #C8102E; }
+.ldr-att-pdf-big { font-size: 19px; }
+.ldr-att-pdf-sub { font-size: 11px; }
+.ldr-att-other { background: #F5F5F5; font-size: 11px; }
+/* showroom line sits above the comments (canvas) */
+.ldr-showroom { background: #F5F5F5; font-size: 12.5px; color: #3D3D3D; }
+.ldr-comments { border-top: 1px solid #EBEBEB; }
+/* Windfall / rep flag / matched account / FETR / tracking (canvas) */
+.ldr-wf-fromlead { background: #F5F5F5; color: #292929; padding: 7px 10px; font-size: 11px; }
+.ldr-rep-long { font-size: 12.5px; color: #292929; }
+.ldr-rep-short { font-size: 12.5px; color: #707070; }
+.ldr-pill-outline { font-size: 11px; font-weight: 600; color: #707070; border: 1px solid #C2C2C2; }
+.ldr-opp-name { color: #00798F; }
+.ldr-stage { font-size: 11px; font-weight: 600; }
+.ldr-stage-open { background: #F5F5F5; color: #00798F; }
+.ldr-stage-won { background: #F0F8E8; color: #194D19; }
+.ldr-stage-lost { background: #fff; color: #C8102E; }
+.ldr-opp { border: 1px solid #EBEBEB; border-left-width: 3px; }
+.ldr-opp-open { border-left-color: #00798F; }
+.ldr-opp-won { border-left-color: #4A6D22; }
+.ldr-opp-lost { border-left-color: #C8102E; }
+.ldr-fetr-h { background: #74A63A; color: #000; border-bottom: 1px solid #9EA2A2; }
+.ldr-fetr-h-dark { background: #4A6D22; color: #fff; }
+.ldr-fetr-row { border-bottom: 1px dotted #9EA2A2; }
+.ldr-fetr a { color: #00798F; }
+.ldr-campaign-card-competitor { background: #E1DED8; border-left: 3px solid #C6C1B0; color: #292929; }
+.ldr-campaign-card-branded { background: #F0F8E8; border-left: 3px solid #4A6D22; color: #194D19; }
+.ldr-campaign-card-windfall, .ldr-campaign-card-coldmeta { background: #F5F5F5; border-left: 3px solid #00798F; color: #292929; }
+.ldr-campaign-kicker { font-size: 12.5px; font-weight: 600; }
+.ldr-campaign-card .ldr-strong { font-size: 14px; }
+.ldr-campaign-card .ldr-small { font-size: 12.5px; }
+.ldr-tracking .ldr-fact-v, .ldr-utm-content .ldr-fact-v { font-size: 14px; font-weight: 600; }
+/* right column (canvas) */
+.ldr-btn.ldr-btn-text { background: transparent; border: none; color: #707070; font-size: 14px; }
+.ldr-btn.ldr-btn-text:disabled { opacity: 0.5; }
+/* #137: Save filled green (ldr-btn-primary), Cancel white with the grey border. v5.6: Quick Edit's size (no 14px override) */
+.ldr-openopp-caption { background: #F5F5F5; color: #292929; font-size: 11px; }
+.ldr-admin-note { background: #F5F5F5; color: #292929; font-size: 11px; }
+
+/* ==== Canvas f123 (notes #89A, #90): detail header ====
+   Top-aligned; the name row is 44px tall with the name and tags centred in it; the Submitted / account / rep /
+   Outreach lines sit directly under the name in the same column; the actions keep their width (one row). */
+.ldr-d-header { align-items: flex-start; margin-bottom: 16px; }
+.ldr-d-name { line-height: 1.15; margin: 0; }
+.ldr-d-actions { flex-shrink: 0; align-items: center; }
+.ldr-d-info { display: flex; flex-direction: column; gap: 3px; margin: 0; }
+.ldr-d-info .ldr-muted, .ldr-d-info .ldr-outreach { margin-top: 0; }
+/* customer type pill in the queue-card type colours, white text and icon (Unknown stays grey) */
+.ldr-tag.ldr-type-pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; }
+
+/* ==== Canvas f123 (notes #89B): "Fixed submission links" window ====
+   Capped to the viewport; the header (title, Clear All, ×) stays put and the list scrolls (~10 rows at 660px). */
+.ldr-dialog.ldr-dialog-link {
+    max-width: 620px; max-height: calc(100vh - 48px); display: flex; flex-direction: column; overflow: hidden; padding: 0;
+}
+.ldr-dialog-link .ldr-flow-head { flex-shrink: 0; align-items: flex-start; gap: 12px; margin: 0; padding: 16px 20px 12px; }
+.ldr-dialog-link .ldr-flow-head .ldr-btn-row { flex-shrink: 0; align-items: center; gap: 8px; }
+.ldr-dialog-link .ldr-dialog-close { position: static; font-size: 19px; font-weight: 600; }
+.ldr-dialog-link .ldr-link-body {
+    padding: 12px 20px 18px; gap: 8px; overflow-y: auto; max-height: 660px; min-height: 0; flex: 1 1 auto;
+}
+.ldr-dialog-link .ldr-relink-row { flex-shrink: 0; }
+
+/* ==== Canvas f123 (notes #89C, #90): Boss View > All Submissions tab row (date filters + stats line) ==== */
+.ldr-allsubs-bar { padding: 14px 24px 0; border-bottom: 1px solid var(--line); }
+.ldr-allsubs-dates { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0 0 6px; }
+.ldr-allsubs-label { font-size: 12.5px; font-weight: 600; color: #292929; margin-right: 4px; }
+.ldr-allsubs-bar .ldr-preset { padding: 5px 10px; font-size: 11px; }
+.ldr-date.ldr-allsubs-date { flex: 0 0 140px; width: 140px; }
+.ldr-allsubs-from { margin-left: 8px; }
+.ldr-allsubs-stats { font-size: 11px; color: #707070; padding: 0 0 10px; }
+.ldr-allsubs-unclaimed { color: #C8102E; font-weight: 600; }
+
+/* ==== Canvas f123 (notes #89E): queue card bottom line ====
+   No wrapping: Zip/Postal stays left; the claim label and coordinator pill sit in a right-aligned column on the same
+   line, and a long coordinator name wraps inside the pill. */
+.ldr-row-bottom-right {
+    margin-left: auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; text-align: right;
+}
+.ldr-row-bottom-right .ldr-tag-coord { margin-left: 0; text-align: right; }
+
+/* ==== Canvas d84b (notes #94A): detail header ====
+   The action buttons float right at the top of the name column (flow-root). The name row is a flex row beside them;
+   the info lines are plain nowrap blocks, so a line that doesn't fit beside the buttons drops below them (no flex
+   column here: a flex or overflow container would sit beside the float instead of moving below it). */
+.ldr-d-actions.ldr-d-actions-float {
+    float: right; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end;
+    max-width: 100%; margin: 0 0 6px 16px;
+}
+
+/* ==== Canvas d84b (notes #94B, #95): status buttons in LDR fields, above Project Coordinator ==== */
+.ldr-status-row { display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: center; gap: 6px; }
+.ldr-status-btn {
+    font-family: inherit; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 0; white-space: nowrap;
+    flex-shrink: 0; background: #fff; color: #00798F; border: 1.5px solid #00798F; cursor: pointer; line-height: 1.4;
+}
+.ldr-status-btn.ldr-status-btn-on { background: #00798F; color: #fff; }
+.ldr-status-btn:disabled, .ldr-status-btn.ldr-status-btn-off { background: #fff; color: #707070; border-color: #D8D8D8; cursor: not-allowed; }
+.ldr-junk-menu.ldr-junk-menu-right { left: auto; right: 0; width: 300px; }
+.ldr-coord-note { margin-top: -4px; }
+
+/* ==== Canvas aabc (notes #96–98) ==== */
+/* Draft email: template buttons next to the title (reuse the teal status-button look) */
+.ldr-email-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ldr-email-title-row .ldr-card-title { margin: 0; }
+/* template message preview (Aptos, as pasted) */
+/* details: 90% wide, thin dark line above, first column 160px */
+.ldr-email-preview .ldr-email-rows { width: 90%; font-size: 12.5px; border-top: 1px solid #292929; padding-top: 3px; }
+.ldr-email-preview .ldr-email-k { width: 160px; }
+/* Open opportunities: Split Territory tag before the stage pill */
+.ldr-opp-tags { display: flex; gap: 6px; align-items: center; margin-left: 8px; }
+.ldr-tag.ldr-tag-split { font-size: 11px; font-weight: 600; padding: 2px 8px; background: #C8102E; color: #fff; white-space: nowrap; }
+/* Log a call: outcome buttons select; Comments; Save (green outline) left of Cancel */
+.ldr-call-oc.ldr-call-oc-on, .ldr-call-oc.ldr-call-oc-on:hover { background: #00798F; border-color: #00798F; color: #fff; }
+.ldr-call-notes { display: block; margin: 0 0 10px; }
+.ldr-call-actions { display: flex; align-items: center; gap: 12px; }
+.ldr-btn.ldr-call-save { padding: 6px 14px; font-size: 12.5px; font-weight: 600; background: #fff; color: #4A6D22; border: 1.5px solid #4A6D22; cursor: pointer; }
+.ldr-btn.ldr-call-save.ldr-call-save-off, .ldr-btn.ldr-call-save:disabled { color: #707070; border-color: #D8D8D8; cursor: not-allowed; }
+
+/* ==== Canvas 41be (#115A): dashboards, Estimate and Lead Views scroll inside the fixed-height shell ====
+   A flex child defaults to min-height:auto and never scrolls; give each page pane flex + min-height:0 + its own scroll. */
+.ldr-shell > c-ldr-dashboard,
+.ldr-shell > c-ldr-estimate,
+.ldr-shell > c-ldr-claim-audit,
+.ldr-shell > c-ldr-lead-views { display: block; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.ldr-body { min-height: 0; }
+
+/* ==== Canvas #139-#142: Post Quote inside the inbox body (cards in the queue, the reply page beside them) ====
+   The page fills the space right of the queue and scrolls on its own (the #139C scroll fix). */
+.ldr-body > c-ldr-post-quote { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; }
+.ldr-pq-blurb { margin-bottom: 10px; }
+.ldr-tag.ldr-tag-pq { background: #47647D; color: #fff; border: 1px solid #47647D; padding: 1px 6px; }
+.ldr-tag.ldr-tag-pq-done { background: #4A6D22; color: #fff; }
+.ldr-tag.ldr-tag-genapp { background: #E1DED8; color: #292929; }
+.ldr-tag.ldr-pq-stage-open { background: #F0F8E8; color: #194D19; }
+.ldr-tag.ldr-pq-stage-quote { background: #F5F5F5; color: #00798F; }
+.ldr-tag.ldr-pq-stage-closed { background: #F5F5F5; color: #3D3D3D; }
+.ldr-pq-project { font-size: 12.5px; color: #3D3D3D; margin-bottom: 5px; line-height: 1.35; }
+.ldr-pq-coord { font-size: 11px; font-weight: 600; color: #3D3D3D; text-align: right; }
+.ldr-pq-coord.ldr-pq-coord-none { color: #C8102E; }
+.ldr-pq-child-subject { font-size: 11px; font-weight: 600; color: #292929; margin-top: 5px; }
+
+/* ==== Canvas #143: search matches in other tabs (below the list) ==== */
+.ldr-xt-head { font-size: 12.5px; font-weight: 600; color: #292929; letter-spacing: .2px; margin: 14px 0 2px 0; }
+.ldr-xt-count { font-weight: 600; color: #707070; letter-spacing: 0; }
+.ldr-xt-hint { font-size: 11px; color: #707070; margin: 0 0 8px 0; line-height: 1.35; }
+.ldr-xt { display: block; width: 100%; text-align: left; background: #fff; border: 1px solid #EBEBEB; border-left: 3px solid #C2C2C2;
+    border-radius: 0; padding: 8px 12px 8px 11px; margin-bottom: 6px; cursor: pointer; font-family: inherit; }
+.ldr-xt.ldr-type-contractor { border-left-color: #A24E1F; }
+.ldr-xt.ldr-type-architect { border-left-color: #3E6E9E; }
+.ldr-xt.ldr-type-business { border-left-color: #7C5BA6; }
+.ldr-xt.ldr-type-homeowner { border-left-color: #00798F; }
+.ldr-xt.ldr-type-unknown { border-left-color: #C2C2C2; }
+.ldr-xt-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+.ldr-xt-name { font-size: 14px; font-weight: 600; color: #292929; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ldr-xt-tag { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 0; background: #fff; color: #00798F; border: 1px solid #00798F; white-space: nowrap; flex-shrink: 0; }
+.ldr-xt-email { font-size: 12.5px; color: #3D3D3D; overflow-wrap: anywhere; }
+.ldr-xt-sub { font-size: 11px; color: #707070; margin-top: 3px; }
+.ldr-xt-more { background: #fff; border: 1px solid #C2C2C2; color: #3D3D3D; padding: 3px 11px; border-radius: 0; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+/* ==== Canvas #144 / #145A: Salesforce search in the tab bar ==== */
+.ldr-sp-box { justify-self: center; padding-bottom: 8px; display: flex; align-items: center; gap: 6px; width: 320px; max-width: 100%; }
+.ldr-sp-input { flex: 1 1 auto; min-width: 0; padding: 6px 10px; border: 1px solid #707070; border-radius: 0; font-size: 12.5px; background: #fff; font-family: inherit; color: #292929; }
+.ldr-sp-btn { flex-shrink: 0; padding: 5px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; background: #00798F; color: #fff; border: 1.5px solid #00798F; border-radius: 0; font-family: inherit; }
+.ldr-sp-panel { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px; width: 640px; max-width: calc(100vw - 56px);
+    max-height: min(72vh, calc(100vh - 20rem)); overflow-y: auto; z-index: 40; background: #fff; border: 1px solid #D8D8D8; border-radius: 0;
+    padding: 14px 16px; box-sizing: border-box; text-align: left; }
+.ldr-sp-title-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
+.ldr-sp-title { font-size: 14px; font-weight: 600; color: #292929; }
+.ldr-sp-close { width: 24px; height: 24px; font-size: 19px; line-height: 1; padding: 0; background: transparent; color: #707070; border: none; border-radius: 0; cursor: pointer; }
+.ldr-sp-mode { font-size: 11px; color: #707070; margin-bottom: 12px; }
+.ldr-sp-head { font-size: 12.5px; font-weight: 600; color: #292929; letter-spacing: .2px; margin-bottom: 6px; }
+.ldr-sp-head-sf { margin: 10px 0 6px 0; }
+.ldr-sp-count { color: #707070; }
+.ldr-sp-loading { position: relative; height: 48px; }
+.ldr-sp-none { font-size: 14px; color: #707070; padding: 4px 0 8px 0; }
+.ldr-sp-card { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; border: 1px solid #D8D8D8; border-left: 3px solid #C2C2C2;
+    border-radius: 0; padding: 10px 12px 10px 11px; margin-bottom: 8px; }
+.ldr-sp-card.ldr-type-contractor { border-left-color: #A24E1F; }
+.ldr-sp-card.ldr-type-architect { border-left-color: #3E6E9E; }
+.ldr-sp-card.ldr-type-business { border-left-color: #7C5BA6; }
+.ldr-sp-card.ldr-type-homeowner { border-left-color: #00798F; }
+.ldr-sp-card-main { min-width: 0; }
+.ldr-sp-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 4px; }
+.ldr-sp-name { font-size: 14px; font-weight: 600; color: #292929; }
+.ldr-sp-kind { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 0; background: #47647D; color: #fff; }
+.ldr-tag.ldr-sp-tag { padding: 1px 6px; }
+.ldr-sp-status { font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 0; background: #E3E3E3; color: #292929; }
+.ldr-sp-line { font-size: 12.5px; color: #3D3D3D; margin-bottom: 3px; }
+.ldr-sp-wrap { overflow-wrap: anywhere; }
+.ldr-sp-ink, .ldr-sp-coord { color: #292929; }
+.ldr-sp-coord.ldr-sp-coord-none { color: #C8102E; }
+.ldr-sp-opp-row { margin: 4px 0 3px 0; }
+.ldr-sp-opp { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 0; background: #F0F8E8; color: #194D19; border: 1px solid #C4E2A2; }
+.ldr-sp-why { font-size: 11px; color: #707070; }
+.ldr-sp-open { flex-shrink: 0; font-size: 12.5px; font-weight: 600; color: #00798F; white-space: nowrap; padding: 4px 10px; border: 1.5px solid #00798F;
+    background: #fff; border-radius: 0; cursor: pointer; font-family: inherit; }
+.ldr-sp-foot { font-size: 11px; color: #707070; margin-top: 4px; }
+/* ==== Canvas #146: uncontacted claims notice (reddish, a little larger than the fixed-links notice) + list ==== */
+.ldr-unc-notice { display: flex; align-items: center; gap: 10px; background: #FBE7E9; color: #8A1020; font-size: 14px; padding: 10px 24px; border-bottom: 1px solid #F0B7BE; }
+.ldr-unc-icon { font-size: 16px; line-height: 1; }
+.ldr-link-btn.ldr-unc-link { color: #8A1020; font-weight: 600; text-decoration: underline; font-size: 14px; padding: 0 0 0 4px; }
+.ldr-unc-row { border-left: 3px solid #C2C2C2; padding-left: 12px; }
+.ldr-unc-row.ldr-type-contractor { border-left-color: #A24E1F; }
+.ldr-unc-row.ldr-type-architect { border-left-color: #3E6E9E; }
+.ldr-unc-row.ldr-type-business { border-left-color: #7C5BA6; }
+.ldr-unc-row.ldr-type-homeowner { border-left-color: #00798F; }
+.ldr-unc-kind { font-size: 11px; font-weight: 600; padding: 1px 6px; background: #F5F5F5; color: #3D3D3D; margin-left: 4px; }
+/* ==== v5: record header (canvas notes #152 F, #154, #155 A) ==== */
+/* buttons block: at least 44px tall, centred, so the buttons, the 44px icon and the name row share one centre line */
+.ldr-d-actions.ldr-d-actions-float { min-height: 44px; align-content: center; }
+/* lines 1 and 2: 24px high, wrap (no nowrap), with a right-floated block (status buttons / Current Tab) */
+.ldr-d-line-right { float: right; margin-left: 16px; }
+.ldr-d-line .ldr-status-row.ldr-status-row-head { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; line-height: normal; }
+.ldr-status-row-head .ldr-status-btn { font-size: 12.5px; }
+.ldr-d-line .ldr-tag { margin-right: 8px; vertical-align: middle; line-height: 1.2; }
+.ldr-d-line .ldr-current-tab { float: right; margin-left: 16px; }
+.ldr-d-line .ldr-go-tab { float: none; margin-left: 0; line-height: inherit; }
+/* rep note after the rep name (#152 C) */
+.ldr-rep-note { margin-left: 6px; color: #707070; }
+.ldr-rep-note.ldr-rep-note-flag { color: #292929; }
+/* ==== v5: popups (canvas #152 G): Quick Edit, Log a Call, Draft Email open as centred dialogs ==== */
+/* v5.6: scrollbar-gutter keeps the scrollbar's room reserved, so a popup that starts scrolling (Draft Email after a
+   template is picked) doesn't get narrower and wrap its title line */
+.ldr-dialog.ldr-dialog-pop { max-height: 88vh; overflow: auto; scrollbar-gutter: stable; padding: 16px 20px; box-sizing: border-box; }
+.ldr-dialog.ldr-dialog-qe { max-width: 860px; }
+.ldr-dialog.ldr-dialog-call { max-width: 560px; }
+.ldr-dialog.ldr-dialog-pop.ldr-email-preview { max-width: 900px; background: #F4F2ED; margin: 0; }
+.ldr-pop-title { font-size: 16px; font-weight: 600; color: #292929; margin-bottom: 12px; }
+.ldr-dialog-qe .ldr-quick-edit { margin: 0; padding: 0; background: #fff; border: none; }
+.ldr-pop-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px; }
+/* Draft Email (#155 C): title + copy actions on one line, Close on the right; template buttons on the line below */
+.ldr-email-preview .ldr-preview-head { align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.ldr-email-act { font-size: 12.5px; text-decoration: none; display: inline-block; }
+.ldr-email-plain { color: #707070; font-size: 12.5px; font-weight: 600; text-decoration: underline; white-space: nowrap; margin-left: 4px; }
+.ldr-email-close { flex-shrink: 0; font-size: 12.5px; font-weight: 600; color: #707070; }
+.ldr-email-tpl-row { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; } /* v5.6c: right-aligned */
+.ldr-email-tpl-row .ldr-status-btn { font-size: 12.5px; }
+.ldr-email-msg-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ldr-email-msg-label { font-size: 11px; color: #707070; }
+.ldr-email-undo { font-family: inherit; font-size: 11px; font-weight: 600; padding: 2px 8px; cursor: pointer; background: #fff; color: #3D3D3D; border: 1px solid #C2C2C2; border-radius: 0; }
+.ldr-email-msg { display: block; width: 100%; min-width: 0; box-sizing: border-box; padding: 8px 10px; border: 1px solid #707070; border-radius: 0;
+    background: #fff; font-family: Aptos, Calibri, Arial, sans-serif; font-size: 14px; line-height: 1.35; color: #292929; resize: vertical; }
+.ldr-email-msg-hint { font-size: 11px; color: #707070; margin: 4px 0 10px 0; }
+/* ==== v5: LDR fields layout (canvas #152 I) ==== */
+.ldr-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: start; }
+.ldr-pair-cell { min-width: 0; }
+.ldr-coord-fields.ldr-pair { display: grid; flex-direction: initial; }
+/* Populate Project: on the Project Details title line, right, status-button size */
+.ldr-collapse-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+/* #160 / #161: "LDR Fields" and "Project Details" titles 14px #292929. Convert/Hand-off on the LDR Fields title line and
+   Populate Project (Release green) are sized to their text: 14px, padding 10px 14px (36px tall). The title line's -6px
+   leaves 6px (12px box gap) to Project Coordinator; Project Details' title is 4px above Project Name. */
+.ldr-fields-titlerow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 26px; margin-bottom: -6px; }
+.ldr-fields-titlerow .ldr-card-title, .ldr-collapse-head .ldr-card-title { margin: 0; font-size: 14px; color: #292929; }
+.ldr-btn.ldr-handoff-top, .ldr-btn.ldr-populate-btn { flex-shrink: 0; padding: 10px 14px; font-size: 14px; line-height: normal; white-space: nowrap; }
+.ldr-fields .ldr-collapse-head { padding: 0; }
+.ldr-fields .ldr-pre-conversion lightning-record-edit-form { margin-top: 4px; }
+/* Same left / right edges for every field: lightning-input-field in a record-edit-form adds side padding
+   (slds-form-element_stacked) that the other inputs don't have. Check in Salesforce (notes #152 I, margins). */
+.ldr-fields lightning-input-field { display: block; margin-left: -0.25rem; margin-right: -0.25rem; }
+/* ==== v5.5: record header (canvas #157 / #158) ==== */
+/* buttons float right at the top; the icon + name row (44px, centred together); the info lines full width under the icon */
+.ldr-d-header.ldr-d-head157 { display: flow-root; margin-bottom: 0; }
+/* #161: header, then the alerts (only when one shows: 10px above, 14 - 4 = 10px from the last banner to the status line),
+   then the status-button line with 16px below it. No alerts: line 2's 3px is the gap to the status line. */
+.ldr-d-alerts { display: flow-root; margin: 10px 0 -4px; }
+.ldr-d-statusbar { display: flow-root; margin-bottom: 6px; } /* v6f: 6px to the boxes below (was 16px) */
+.ldr-d-statusline { display: flow-root; line-height: 24px; font-size: 12.5px; color: #707070; }
+.ldr-d-statusline .ldr-outreach { font-size: 12.5px; color: #00798F; margin: 0; white-space: nowrap; }
+.ldr-d-statusline .ldr-outreach strong { color: #00798F; font-weight: 600; }
+.ldr-d-head157 .ldr-d-titlerow { display: flex; align-items: center; gap: 14px; min-height: 44px; margin-bottom: 6px; min-width: 0; }
+.ldr-d-head157 .ldr-d-titlerow .ldr-d-name { line-height: 1.15; margin: 0; }
+.ldr-d-head157 .ldr-d-info { display: block; margin: 0; clear: none; }
+/* every line in line 1's style (#158): 12.5px #707070, 24px, wraps; emphasised parts keep their own colours */
+.ldr-d-head157 div.ldr-d-line { display: flow-root; white-space: normal; line-height: 24px; margin: 0 0 3px; font-size: 12.5px; color: #707070; }
+.ldr-d-head157 .ldr-d-line strong, .ldr-d-head157 .ldr-d-ink { color: #292929; font-weight: 600; }
+.ldr-d-head157 .ldr-d-line .ldr-account-link { font-size: 12.5px; font-weight: 600; color: #00798F; }
+.ldr-d-head157 .ldr-d-line .ldr-outreach { font-size: 12.5px; color: #00798F; margin: 0; }
+.ldr-d-head157 .ldr-d-line .ldr-go-tab { float: right; margin-left: 16px; line-height: 24px; }
+.ldr-d-head157 .ldr-d-line .ldr-error-text { color: #C8102E; }
+.ldr-d-head157 .ldr-d-line strong.ldr-error-text { color: #C8102E; }
+/* ==== v5.6: Project Details popup, Convert/Hand-off under Status, Quick Edit's Save / Cancel ==== */
+.ldr-overlay.ldr-hidden { display: none; }
+.ldr-dialog.ldr-dialog-pd { max-width: 760px; }
+.ldr-pd-titlerow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.ldr-pd-titlerow .ldr-pop-title { margin: 0; }
+.ldr-fields .ldr-dialog-pd .ldr-pre-conversion { border-top: none; padding-top: 0; }
+.ldr-pd-checks { margin-top: 10px; }
+.ldr-pd-actions { margin-top: 14px; }
+.ldr-handoff-row { display: flex; margin-top: 12px; }
+.ldr-fields .ldr-save-row { margin-top: 14px; }
+/* ==== v5.6b: Convert/Hand-off on the left, Quick Edit's Cancel / Save on the right of the same line ==== */
+.ldr-handoff-row { align-items: center; gap: 10px; }
+.ldr-fields .ldr-handoff-row .ldr-save-row { margin: 0 0 0 auto; }
+/* v5.6c: Construction Classification | Timeline under the Project Site address, same 7px gap as the other rows */
+.ldr-pd-classrow { margin-top: 7px; }
+/* v5.7: fields Populate Project filled in, in the Lead page's changed-field yellow (like a browser's autofill); the
+   shadow widens the highlight without moving the layout. Cleared when the field is changed, saved or cancelled. */
+.ldr-autofilled { display: block; background: #FAFFBD; border-radius: 4px; box-shadow: 0 0 0 4px #FAFFBD; }
+/* v5.7b: under the address, which parts Populate Project filled in (same yellow) */
+.ldr-autofill-note { margin-top: 6px; font-size: 12.5px; color: #3D3D3D; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ldr-autofill-chip { background: #FAFFBD; border: 1px solid #E5E08A; border-radius: 4px; padding: 1px 8px; color: #292929; font-weight: 600; }
+/* v5.7: × on the full-width bars at the top of the page (their own 24px side padding), centred on the line */
+.ldr-dismissable.ldr-bar-x { padding-right: 52px; }
+.ldr-bar-x > .ldr-dismiss { top: 50%; right: 16px; transform: translateY(-50%); }
+
+/* ==== v6 (Aqil, 2026-11-03): compact layout, from Aqil's editor-mode values on the Unclaimed tab at a 1045px inbox.
+   Every tab shares these classes; ldrSixSense / ldrPostQuote have the same values in their own copies. ==== */
+/* list column: 250px (was 340), tighter edges, smaller cards */
+.ldr-queue { width: 250px; padding: 7px 2px 7px 7px; } /* v6f1: 7 / 2 / 7 / 7 (v6c: 10 / 4 / 14 / 4) */
+.ldr-queue .ldr-row { padding: 5px 3px 3px 4px; margin-bottom: 6px; } /* v6f1 */
+.ldr-queue .ldr-age { padding-left: 4px; padding-right: 4px; }
+.ldr-tag { padding-left: 5px; padding-right: 5px; }
+.ldr-filter-row { gap: 4px; }
+.ldr-sort-select { padding: 2px 0; }
+.ldr-sort-btn { padding: 2px 1px 2px 5px; height: 26px; box-sizing: border-box; }
+/* record page */
+.ldr-detail { padding: 7px; } /* v6f1: 7px all round (v6c: 10 / 3 / 8 / 6) */
+/* v6c: the What They Submitted / LDR Fields columns 6px apart (was 18), and 6px between the cards in each (was 14) */
+.ldr-grid { gap: 7px; } /* v6f1 (v6c: 6) */
+.ldr-col { gap: 7px; } /* v6f1 (v6c: 6) */
+.ldr-d-head157 .ldr-d-titlerow { gap: 6px 5px; }
+/* v6e (Aqil): replaces v6b's wrapping row / v6d's two halves. Top row: icon + name, then the buttons in all the space beside
+   it, right-aligned. The ones that don't fit (headerSplit, measured in ldrInbox.js) sit at the right end of line 1's row,
+   and line 1 is then at most 70% wide; with none, line 1 has the full width. Line 2 full width, Current Tab · Go to <Tab> on
+   its right. Buttons never shrink or wrap their text, so their widths can be measured. */
+.ldr-d-header.ldr-d-head157 { display: block; }
+.ldr-d-hrow { display: flex; gap: 6px; min-width: 0; } /* v6f1: 6px (was 16); HEADER_NAME_GAP in ldrInbox.js */
+.ldr-d-hrow-top { align-items: center; margin-bottom: 6px; }
+.ldr-d-head157 .ldr-d-hrow-top > .ldr-d-titlerow { flex: 0 1 auto; min-width: 0; margin-bottom: 0; }
+.ldr-d-head157 .ldr-d-actions { gap: 6px; } /* v6f1 (was 5); HEADER_BUTTON_GAP in ldrInbox.js */
+/* v6f1: only as wide as its buttons, pushed right (was the whole rest of the row). v6f2: this rule had been dropped by
+   mistake in v6f1, leaving the buttons on the left. */
+.ldr-d-actions.ldr-d-actions-top { flex: 0 1 auto; margin-left: auto; min-width: 0; justify-content: flex-end; flex-wrap: wrap; }
+.ldr-d-head157 [data-hb] { flex-shrink: 0; white-space: nowrap; }
+/* v6f: line 1 sits at the bottom of its row, level with the bottom of any buttons beside it (was the top) */
+.ldr-d-hrow-mid { align-items: flex-end; }
+.ldr-d-hrow-mid > .ldr-d-line1 { flex: 1 1 auto; min-width: 0; }
+/* v6f6 (Aqil): line 1 has no width cap (was 70%); the buttons beside it are at most 200px, pushed right, wrapping
+   inside those 200px if there are more */
+.ldr-d-hrow-split > .ldr-d-line1 { flex: 1 1 auto; max-width: none; }
+.ldr-d-actions.ldr-d-actions-bottom { flex: 0 0 auto; max-width: 200px; margin-left: auto; min-width: 0; justify-content: flex-end; flex-wrap: wrap; margin-bottom: 3px; }
+.ldr-d-head157 .ldr-current-tab .ldr-go-tab { float: none; margin-left: 0; line-height: inherit; }
+.ldr-d-actions .ldr-btn { padding-left: 5px; padding-right: 5px; }
+.ldr-status-btn { padding-left: 5px; padding-right: 5px; }
+.ldr-card { padding: 7px; } /* v6f1 (v6: 10) */
+.ldr-card.ldr-fields { gap: 6px; }
+.ldr-facts { gap: 6px; }
+.ldr-tracking { gap: 6px; }
+.ldr-comments { padding-top: 4px; margin-top: 6px; } /* v6f1: 6px above (was 14) */
+.ldr-links { gap: 6px; margin-top: 6px; } /* v6f1 (v6: gap 4, 12 above) */
+/* Convert/Hand-off line: Cancel / Save wrap to their own line (still on the right) when there isn't room beside the
+   hand-off button, e.g. while "Unsaved changes" shows. Button sizes: v6f1 below. */
+.ldr-handoff-row { flex-wrap: wrap; gap: 6px; margin-top: 4px; } /* v6f1: 4px above (was 12) */
+/* buttons in the "No Lead or Contact is linked" banner (banner padding: v6f1 below) */
+.ldr-d-alerts .ldr-btn-row .ldr-btn { padding-left: 5px; padding-right: 5px; }
+
+/* ==== v6f1 (Aqil, 2026-11-04): editor-mode notes, applied wherever the same classes are used; ldrSixSense / ldrPostQuote
+   have the same values in their own stylesheets. Spacing inside Salesforce's own components (field labels, Project
+   Details fields) is in the LDR_InboxBaseStyles static resource, which ldrInbox.js loads. ==== */
+/* top bar 50px (was 64), tab bar 40px (was 47). The Salesforce search box's 8px bottom padding made its row 40px inside the
+   bar's 36px, pushing the tabs 4px below the bar's line; 4px padding fits it, and the active tab's underline sits on
+   the bar's bottom line as before. */
+/* At a 1045px inbox the logo + tabs and the right side (Signed in as / View as / version / Updated / ↻) didn't fit one
+   line: 24px from the logo to the tabs (was 34) and 6px between the right-side items (was 10) make them fit. No
+   max-height, so a longer name wraps the right side onto a second line instead of spilling over the tab bar. */
+.ldr-topbar { min-height: 50px; gap: 6px; }
+.ldr-brand, .ldr-top-tabs, .ldr-top-tab { height: 49px; } /* + the bar's 1px bottom line = 50px */
+.ldr-brand { gap: 24px; }
+.ldr-topbar-right { gap: 6px; }
+.ldr-tabbar { padding-top: 3px; height: 40px; box-sizing: border-box; }
+.ldr-tabbar .ldr-sp-box { padding-bottom: 4px; }
+/* v6f3: the tab groups can't shrink below their content and the search box was a fixed 320px, so below ~1140px the
+   right group (Finished / All) ran past the inbox and was clipped. The search box now gives way first, from 320px
+   down to 150px. (v5.x hid this with its 0.9 zoom.) */
+/* v6f4 (Aqil): 8px sides (were 24), 6px between the tab groups and the search box and between tabs (were 22). The
+   middle column is all the space between the two tab groups, with the search box (150-320px) centred in it, so it's
+   always the same distance from Prospects and from Finished. (Centred on the page doesn't fit at these widths: the
+   left group reaches past the middle.) */
+.ldr-tabbar { grid-template-columns: max-content minmax(150px, 1fr) max-content; padding-left: 8px; padding-right: 8px; column-gap: 6px; }
+.ldr-tabbar .ldr-tabs { gap: 6px; }
+.ldr-tabbar .ldr-sp-box { justify-self: center; width: 100%; max-width: 320px; }
+.ldr-tab { padding-bottom: 7px; }
+/* list: group headers 10px apart (was 14), age pills 1px top / bottom */
+.ldr-mine-head:not(.ldr-mine-head-first) { margin-top: 10px; }
+.ldr-age { padding-top: 1px; padding-bottom: 1px; }
+/* record header: buttons and the "Claimed by …" label 30px high; info lines 1px apart; line 1 level with buttons beside it */
+.ldr-d-head157 .ldr-d-actions .ldr-btn { height: 30px; min-height: 30px; max-height: 30px; padding-top: 1px; padding-bottom: 1px; box-sizing: border-box; }
+.ldr-d-head157 .ldr-d-actions .ldr-badge { display: inline-flex; align-items: center; height: 30px; padding: 6px 5px; box-sizing: border-box; }
+.ldr-d-head157 div.ldr-d-line { margin: 1px 0 -2px; padding-top: 2px; }
+.ldr-d-statusbar .ldr-d-line { padding-top: 2px; margin-bottom: -2px; }
+.ldr-d-actions.ldr-d-actions-bottom { margin-bottom: -2px; }
+/* alerts: 5px apart, padding 5 / 25 / 5 / 7 (× in the right 25px) */
+.ldr-d-alerts .ldr-banner { padding: 5px 7px; margin-bottom: 5px; }
+.ldr-d-alerts .ldr-banner.ldr-dismissable { padding-right: 25px; }
+.ldr-d-alerts .ldr-dismissable > .ldr-dismiss { top: 3px; right: 4px; width: 20px; }
+/* cards: titles, grey notes, comments, activity rows 6px apart */
+.ldr-card-title { margin-bottom: 6px; }
+.ldr-hint-line { margin-bottom: 6px; }
+.ldr-timeline-row { gap: 6px; padding: 6px 0; }
+/* LDR Fields */
+.ldr-fields-titlerow { gap: 6px; margin-bottom: -4px; }
+.ldr-pair { gap: 6px; }
+.ldr-btn.ldr-handoff-top, .ldr-btn.ldr-populate-btn { padding: 1px 5px; height: 30px; min-height: 0; box-sizing: border-box; }
+.ldr-qe-actions { gap: 6px; }
+.ldr-qe-actions .ldr-btn-small { height: 25.5px; min-height: 25.5px; max-height: 25.5px; padding: 0 14px; box-sizing: border-box; }
+/* popups (Project Details, Quick Edit, Log Call, Draft Email): 10px padding (was 16 / 20) */
+.ldr-dialog.ldr-dialog-pop { padding: 10px; }
+.ldr-pd-titlerow { gap: 6px; margin-bottom: 4px; }
+.ldr-pd-classrow { margin-top: 6px; }
+/* Project Details: every field 4px in from both edges, as the address's Search and Country are (the -4px pull-out
+   from #152 I is off here; Project Name and the checkboxes have no padding of their own, so they get 4px margins).
+   Two-field rows have no gap of their own: each field's 4px sides make the same 8px middle gap as City | State. */
+.ldr-fields .ldr-dialog-pd lightning-input-field { margin-left: 0; margin-right: 0; }
+.ldr-dialog-pd .ldr-project-name { display: block; margin: 0 4px; }
+.ldr-dialog-pd .ldr-pair { column-gap: 0; row-gap: 6px; }
+.ldr-dialog-pd .ldr-pd-checks lightning-input { display: block; margin: 0 4px; }
+
+/* ==== v6f7 (Aqil, 2026-11-04) ==== */
+/* Top bar: with Chrome's 14px minimum font the logo + tabs (461px) and the admins' right side (Signed in as / View as /
+   version / Updated / ↻, 566px) no longer fit a 1045-1065px inbox and the right side wrapped. 8px sides (were 24), 16px
+   between the top tabs (were 22) and 8px pill sides (were 10). */
+.ldr-topbar { padding-left: 8px; padding-right: 8px; }
+.ldr-top-tabs { gap: 16px; }
+.ldr-topbar-right .ldr-pill { padding-left: 8px; padding-right: 8px; }
+/* Record header (editor notes): "Claimed by …" label 3px / 2px padding (was 6 / 5), buttons 4px sides (were 5) */
+.ldr-d-head157 .ldr-d-actions .ldr-badge { padding: 3px 2px; }
+.ldr-d-head157 .ldr-d-actions .ldr-btn { padding-left: 4px; padding-right: 4px; }
+/* The name box keeps its full width (was allowed to shrink): ldrInbox.js measures it to decide how many buttons fit beside
+   it, and a squeezed name made the room look bigger, so too many buttons stayed on top and wrapped into a second row. A
+   name longer than the whole row ends in "…". */
+.ldr-d-head157 .ldr-d-hrow-top > .ldr-d-titlerow { flex: 0 0 auto; max-width: 100%; }
+.ldr-d-head157 .ldr-d-hrow-top .ldr-d-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* buttons beside the name: 6px above and below (inside the name's 44px row, so the row only grows if they wrap) */
+.ldr-d-actions.ldr-d-actions-top { margin-top: 6px; margin-bottom: 6px; }
+/* buttons beside line 1: rows 1px apart, pulled up 5px. At most half the row (was 200px): one to three buttons are under
+   200px anyway, but four (e.g. a record claimed by someone else at a 1045px inbox: Form Submission / Call / Log Call /
+   Draft Email, 321px) wrapped into two rows inside 200px, giving three rows of buttons. Now they stay on one row and
+   line 1 wraps beside them instead, which is shorter. */
+.ldr-d-actions.ldr-d-actions-bottom { row-gap: 1px; margin-top: -5px; margin-bottom: 0; max-width: 50%; }
+/* line 1: 0 above, 1px below, no top padding; line 2: 2px above, -4px below, no top padding */
+.ldr-d-head157 div.ldr-d-line.ldr-d-line1 { margin: 0 0 1px; padding-top: 0; }
+.ldr-d-head157 div.ldr-d-line.ldr-d-line2 { margin: 2px 0 -4px; padding-top: 0; }
+/* "From another submission" under both Project Coordinator and Lead Funnel Timestamp (was under the first only) */
+.ldr-coord-fields.ldr-pair > .ldr-coord-note { grid-column: 1 / -1; }
+/* LDR Fields at least 320px wide, so "Lead Funnel Timestamp" stays on one line at a 14px minimum font (it needs 318px:
+   two 148px fields + 6px gap + the card's padding and border; the label is also set not to wrap, LDR_InboxBaseStyles).
+   What They Submitted takes the remaining width; its first column (Submitted date / Project name / Project zip) is a
+   little wider so the date keeps to one line at a 1045px inbox. Only while the record is in two columns (the 1080px
+   rule above makes it one column). */
+@media (min-width: 1081px) {
+    .ldr-grid { grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr); }
+    .ldr-facts.ldr-facts-submitted { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+/* ==== v6f8 (Aqil, 2026-11-04) ==== */
+/* FETR: every value can be typed over before copying. One-line values are inputs, Questions/Comments/Concerns, Home/Zip
+   Code Value and Instant Estimator are textareas that grow with their text (field-sizing; other browsers get one row
+   per line). They read as the text, with a light underline, until hovered or focused. ↗ opens a linked value. */
+.ldr-fetr-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.ldr-fetr-row.ldr-fetr-edit { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 4px; row-gap: 2px; }
+.ldr-fetr-k { flex: 0 0 auto; }
+.ldr-fetr-in { flex: 1 1 120px; min-width: 0; box-sizing: border-box; margin: -2px 0; padding: 1px 4px; border: 1px solid transparent;
+    border-bottom-color: #C2C2C2; border-radius: 0; background: transparent; font: inherit; color: inherit; letter-spacing: inherit; }
+.ldr-fetr-in:hover { border-color: #C2C2C2; background: #fff; }
+.ldr-fetr-in:focus { border-color: #00798F; background: #fff; outline: none; }
+.ldr-fetr-in.ldr-fetr-in-link { color: #00798F; text-decoration: underline; }
+.ldr-fetr-ta { display: block; resize: none; overflow-y: auto; field-sizing: content; line-height: 1.4; }
+.ldr-fetr-edit-below > .ldr-fetr-ta { flex: 1 1 100%; margin-top: 0; }
+.ldr-fetr-open { flex: 0 0 auto; color: #00798F; text-decoration: none; }
+
+/* ==== v6g1 (Aqil, 2026-11-04): popups fit the window ==== */
+/* Every popup is at most the overlay's height (the window less its 24px padding) and at most the window less 190px, so
+   it stays clear of Salesforce's header and utility bar, inside the inbox's own area. Draft Email (88vh before) ran
+   past the top of a short window and took its title line and Close with it. Should one still not fit, the overlay
+   scrolls and starts at the popup's top (safe centring) instead of cutting it off. Widths are unchanged: they're what
+   keeps the fields on one line (Quick Edit's Email already fills its box at 860px). */
+.ldr-overlay { overflow-y: auto; align-items: safe center; }
+.ldr-overlay > .ldr-dialog { max-height: min(100%, calc(100vh - 190px)); }
+/* these two have their 20px padding outside their height */
+.ldr-overlay > .ldr-dialog.ldr-dialog-flow, .ldr-overlay > .ldr-dialog.ldr-dialog-wide { max-height: min(calc(100% - 40px), calc(100vh - 230px)); }
+/* Draft Email: everything but the white box stays put; the box (To / Bcc / Subject, message, details) gets its own
+   scrollbar when there isn't room for all of it (v6g3 layout below) */
+.ldr-dialog.ldr-dialog-pop.ldr-email-preview { display: flex; flex-direction: column; scrollbar-gutter: auto; }
+.ldr-email-preview > * { flex-shrink: 0; }
+/* The other popups scroll as a whole when they don't fit; their title line and Cancel / Save line stay in view. The
+   flat white box-shadows (not a visible shadow, #123) paint over the 10px popup padding and the line's own spacing, so
+   fields scrolling past don't show around it; nothing moves when the popup doesn't scroll. */
+.ldr-dialog-pop > .ldr-pop-title, .ldr-dialog-pop > .ldr-pop-head, .ldr-dialog-pop > .ldr-pd-titlerow { position: sticky; top: 0; z-index: 2; background: #fff; }
+.ldr-dialog-pop > .ldr-pop-title { box-shadow: 0 -10px 0 #fff, 0 12px 0 #fff; }
+.ldr-dialog-pop > .ldr-pop-head { box-shadow: 0 -10px 0 #fff, 0 10px 0 #fff; }
+.ldr-dialog-pop > .ldr-pd-titlerow { box-shadow: 0 -10px 0 #fff, 0 4px 0 #fff; }
+.ldr-dialog-pop .ldr-pop-actions, .ldr-dialog-pop .ldr-qe-actions { position: sticky; bottom: 0; z-index: 2; background: #fff; box-shadow: 0 10px 0 #fff; }
+.ldr-dialog-pop .ldr-pop-actions { box-shadow: 0 -10px 0 #fff, 0 10px 0 #fff; }
+.ldr-dialog-pop .ldr-qe-actions.ldr-pd-actions { box-shadow: 0 -14px 0 #fff, 0 10px 0 #fff; }
+
+/* ==== v6g3 (Aqil, 2026-11-05): Draft Email layout ==== */
+/* Title + Close; Submission Details and Questions or Comments lines under it (the note's grey small text; Questions
+   or Comments kept to one line, ending in "…"); then the email box | the template buttons (175px, one per line, 6px
+   apart), 6px between them; then the copy actions; then the note. */
+.ldr-email-preview .ldr-preview-head { margin-bottom: 4px; }
+.ldr-email-info { margin-bottom: 2px; }
+.ldr-email-info.ldr-email-qc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; }
+.ldr-email-preview > .ldr-email-cols { display: flex; gap: 6px; flex: 1 1 auto; min-height: 140px; margin-bottom: 8px; }
+.ldr-email-cols > .ldr-preview-body { flex: 1 1 auto; min-width: 0; margin: 0; overflow-y: auto; scrollbar-gutter: stable; }
+.ldr-email-tpl-col { flex: 0 0 175px; align-self: flex-start; display: flex; flex-direction: column; gap: 6px; }
+.ldr-email-tpl-col .ldr-status-btn { width: 100%; font-size: 12.5px; }
+.ldr-email-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 6px; }
+/* Subject: an input on the Subject line */
+.ldr-email-subject-row { display: flex; align-items: baseline; gap: 4px; }
+.ldr-email-subject { flex: 1 1 auto; min-width: 0; box-sizing: border-box; padding: 1px 6px; border: 1px solid #C2C2C2; border-radius: 0;
+    background: #fff; font: inherit; color: #292929; letter-spacing: inherit; }
+.ldr-email-subject:focus { border-color: #00798F; outline: none; }
+
+/* ==== v6g4 (Aqil, 2026-11-05): Draft Email spacing (editor notes). The inbox's display only: the copied email is built
+   with its own inline styles (emailRichHtml / emailRichText) and doesn't change. ==== */
+.ldr-dialog.ldr-dialog-pop.ldr-email-preview { padding: 10px 8px 4px 12px; }
+/* title line 28px: "Draft Email" 18px (was 12.5px, 14px with the 14px minimum font), 2px above; Close 2px above */
+.ldr-email-preview .ldr-preview-head { margin-bottom: 0; min-height: 28px; }
+.ldr-email-preview .ldr-email-title-row .ldr-card-title { font-size: 18px; line-height: 26px; padding-top: 2px; }
+.ldr-email-preview .ldr-email-close { padding-top: 2px; }
+/* the grey lines (Submission Details, Questions or Comments, the note): no 3px above; 2px under Questions or Comments */
+.ldr-email-preview .ldr-muted { margin-top: 0; }
+.ldr-email-info { margin-bottom: 0; }
+.ldr-email-info.ldr-email-qc { margin-bottom: 2px; }
+.ldr-email-preview > .ldr-email-cols { margin-bottom: 3px; }
+/* email box: padding 5 / 4 / 1 / 9 (was 12 / 14) */
+.ldr-email-cols > .ldr-preview-body { padding: 5px 4px 1px 9px; }
+.ldr-email-preview .ldr-email-details { margin-top: 0; padding-top: 4px; }
+/* the "Message · edit it before copying" label is gone; Undo Edits stays on the right when it shows */
+.ldr-email-preview .ldr-email-msg-head { justify-content: flex-end; margin-bottom: 2px; }
+/* message box: padding 5 / 3 / 1 / 3, 5px in from the left (its width allows for that); 8 rows to start (ldrInbox.js) */
+.ldr-email-preview .ldr-email-msg { padding: 5px 3px 1px 3px; margin-left: 5px; width: calc(100% - 5px); }
+.ldr-email-preview .ldr-email-msg-hint { margin: 2px 5px 2px 0; }
+.ldr-email-row { padding: 0; }
+/* copy actions: 20px apart, 1px above, nothing below */
+.ldr-email-actions { column-gap: 20px; margin: 1px 0 0; }
+
+/* ==== v6g5 / v6g6 (Aqil, 2026-11-05): Draft Email and Project Details sizes and spacing (editor notes) ==== */
+/* Draft Email: at least 850px wide, half the window only when that's wider (v6g6; was 70%, too wide on a big screen);
+   at least 650px tall, at most 75% (the white email box takes the height). On a window too small for a minimum, the
+   minimum gives way (never past the v6g1 limits), so the popup still fits and Close stays in view. */
+.ldr-overlay > .ldr-dialog.ldr-dialog-pop.ldr-email-preview {
+    min-width: min(850px, 100%); max-width: 50%;
+    min-height: min(650px, 75%, calc(100vh - 190px)); max-height: min(75%, calc(100vh - 190px));
+    padding: 6px 6px 4px 10px;
+}
+/* title line 24px (was 28): no 2px above "Draft Email" or Close, 4px under Close, 1px pulled up under the line */
+.ldr-email-preview .ldr-preview-head { min-height: 24px; margin-bottom: -1px; }
+.ldr-email-preview .ldr-email-title-row .ldr-card-title { max-height: 24px; padding-top: 0; }
+.ldr-email-preview .ldr-email-close { padding-top: 0; padding-bottom: 4px; }
+.ldr-email-actions { margin-top: 2px; }
+/* Project Details: at least 550px wide, half the window when that's wider; 645px tall (v6g6, was 650; less only on a
+   window too short for it), padding 10 / 5 / 5 / 10. v6g6: the fields' area is 565px (it doesn't stretch; it only
+   grows if the fields need more, so they never run under the buttons), Cancel / Save straight under it with 5px
+   below. */
+.ldr-overlay > .ldr-dialog.ldr-dialog-pop.ldr-dialog-pd {
+    min-width: min(550px, 100%); max-width: 50%;
+    min-height: min(645px, 100%, calc(100vh - 190px)); max-height: min(645px, 100%, calc(100vh - 190px));
+    padding: 10px 5px 5px 10px; display: flex; flex-direction: column;
+}
+.ldr-dialog-pd > * { flex-shrink: 0; }
+.ldr-dialog-pd > .ldr-pre-conversion { flex: 0 0 auto; min-height: 565px; }
+/* nothing under the title line, Construction Classification | Timeline 4px under the address, the checkboxes 6px under
+   that (v6g6, were 6 / 8) (the field spacing inside is in LDR_InboxBaseStyles) */
+.ldr-pd-titlerow { margin-bottom: 0; }
+.ldr-dialog-pop > .ldr-pd-titlerow { box-shadow: 0 -10px 0 #fff; }
+.ldr-pd-classrow { margin-top: 4px; }
+.ldr-pd-checks { margin-top: 6px; }
+.ldr-dialog-pd .ldr-qe-actions.ldr-pd-actions { margin: 0 0 5px; row-gap: 0; }
+/* the white below it covers its 5px and the popup's 5px when the popup scrolls (nothing above: no gap there now) */
+.ldr-dialog-pop .ldr-qe-actions.ldr-pd-actions { box-shadow: 0 10px 0 #fff; }
+
+/* ==== v6g7 (Aqil, 2026-11-09): queue, cards and detail header spacing (editor notes) ==== */
+/* queue: 5px on the left (was 7); rows padding 4 all round (was 5 / 3 / 3 / 4) */
+.ldr-queue { padding-left: 5px; }
+.ldr-queue .ldr-row { padding: 4px; }
+/* the age / date tag never wraps, even when a long name does */
+.ldr-row-top .ldr-age { white-space: nowrap; flex-shrink: 0; }
+/* Questions or Comments 14px (was 16) */
+.ldr-comment-big { font-size: 14px; }
+/* cards: padding 10 / 10 / 5 / 10 (was 7) */
+.ldr-card { padding: 10px 10px 5px; }
+/* detail: padding 7 / 4 / 4 / 10 (was 7) */
+.ldr-detail { padding: 7px 4px 4px 10px; }
+/* header top row 30px (was 44): "Not yet in CRM" box 30px tall. A minimum, not a fixed height: a Lead / Contact's
+   32px icon, or buttons that need more, still fit. */
+.ldr-unlinked-icon { height: 30px; }
+.ldr-d-head157 .ldr-d-titlerow { min-height: 30px; }
+.ldr-d-hrow.ldr-d-hrow-top { min-height: 30px; }
+/* the buttons beside the name lose their 6px above / below (it was room inside the old 44px row; in a 30px row it
+   made the row 42px) */
+.ldr-d-actions.ldr-d-actions-top { margin-top: 0; margin-bottom: 0; }
+/* LDR Fields title: nothing pulled up under it (was -4px) */
+.ldr-fields-titlerow { margin-bottom: 0; }
+
+/* ==== v7 (Aqil, 2026-11-09) ==== */
+/* Tab bar: with Chrome's 14px minimum font the search input grew to 34px; with its box's 4px under it that's 38px in
+   the bar's 36px, so the row overflowed and the tabs (bottom-aligned) sat 2px low, their green line below the bar's
+   line. The input and its button are held to 32px, so the search box always fits. */
+.ldr-tabbar .ldr-sp-input, .ldr-tabbar .ldr-sp-btn { height: 32px; min-height: 0; box-sizing: border-box; }
+/* queue row: the age / date stays at the top right when the name wraps to two lines (was centred on the row) */
+.ldr-row-top { align-items: flex-start; }
+/* detail padding 10 / 5 / 10 / 10; queue padding 5 all round */
+.ldr-detail { padding: 10px 5px 10px 10px; }
+.ldr-queue { padding: 5px; }
+/* Open opportunities: line 1 the stage (and Split Territory) on the right, line 2 the name on the left; the four facts
+   in two columns (Record Type and Close removed) */
+.ldr-opp-head.ldr-opp-head-v7 { flex-direction: column; align-items: stretch; gap: 2px; }
+.ldr-opp-head-v7 > .ldr-opp-tags { align-self: flex-end; margin-left: 0; }
+.ldr-opp-head-v7 > .ldr-opp-namelink { align-self: flex-start; text-align: left; }
+.ldr-copp-grid.ldr-copp-grid-v7 { grid-template-columns: repeat(2, minmax(0, 1fr)); }

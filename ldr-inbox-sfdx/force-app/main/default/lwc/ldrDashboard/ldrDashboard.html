@@ -1,0 +1,326 @@
+<template>
+    <div class="db-wrap">
+        <template lwc:if={isMy}>
+            <div class="db-top">
+                <div>
+                    <div class="db-title">{myTitle}</div>
+                    <div class="db-sub">Your worked leads (Project Coordinator + Lead Funnel Time Stamp) and opportunities you created. Live from Salesforce, {myAsOf}.</div>
+                </div>
+                <div class="db-controls">
+                    <template for:each={periods} for:item="p">
+                        <button key={p.key} class={p.cls} data-key={p.key} onclick={handlePeriod}>{p.label}</button>
+                    </template>
+                </div>
+            </div>
+            <template lwc:if={loading}>
+                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+            </template>
+            <template lwc:if={error}>
+                <div class="db-error">Could not load your dashboard: {error}</div>
+            </template>
+            <template lwc:if={hasMy}>
+                <div class="db-kpis">
+                    <template for:each={myKpis} for:item="k">
+                        <div key={k.key} class="db-card">
+                            <div class="db-card-title">{k.label}</div>
+                            <div class={k.cls}>{k.value}</div>
+                            <div class="db-small">{k.sub}</div>
+                        </div>
+                    </template>
+                </div>
+                <div class="db-two-my">
+                    <div class="db-card">
+                        <div class="db-card-head">
+                            <div class="db-card-title">Suggested actions</div>
+                            <div class="db-small">{actionCount} to look at</div>
+                        </div>
+                        <template lwc:if={noActions}>
+                            <div class="db-done">Nothing needs your attention right now. 🎉</div>
+                        </template>
+                        <template for:each={actionItems} for:item="ac">
+                            <div key={ac.key}>
+                                <template lwc:if={ac.isHeader}>
+                                    <div class="db-act-head"><span class={ac.dotCls}></span><span class="db-strong">{ac.title}</span><span class="db-act-count">{ac.count}</span></div>
+                                    <div class="db-act-hint">{ac.hint}</div>
+                                </template>
+                                <template lwc:if={ac.isItem}>
+                                    <button class="db-act-item" data-key={ac.key} onclick={openAction}>
+                                        <span><strong>{ac.name}</strong>&nbsp;<span class="db-small">· {ac.sub}</span></span>
+                                        <span class="db-act-cta">{ac.cta} →</span>
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="db-col">
+                        <div class="db-card">
+                            <div class="db-card-title">Your speed</div>
+                            <div class="db-mini-grid db-mini-3">
+                                <template for:each={mySpeed} for:item="sp">
+                                    <div key={sp.key} class="db-mini">
+                                        <div class="db-small">{sp.label}</div>
+                                        <div class={sp.cls}>{sp.value}</div>
+                                        <div class="db-tiny">{sp.sub}</div>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="db-small db-foot">{mySpeedNote}</div>
+                        </div>
+                        <div class="db-card">
+                            <div class="db-card-title">Your leads by status · {periodLabel}</div>
+                            <div class="db-bar-track db-status-track"><div style={myStatusStyle}></div></div>
+                            <div class="db-legend">
+                                <template for:each={myStatusLegend} for:item="lg">
+                                    <span key={lg.key} class="db-legend-item"><span class="db-swatch" style={lg.swatch}></span>{lg.label}</span>
+                                </template>
+                            </div>
+                            <div class="db-small db-foot">{myShareLine}</div>
+                        </div>
+                        <template for:each={myTrends} for:item="tr">
+                            <div key={tr.key} class="db-card">
+                                <div class="db-card-title">{tr.title}</div>
+                                <div class="db-trend db-trend-my">
+                                    <template for:each={tr.bars} for:item="tb">
+                                        <div key={tb.key} class="db-trend-col">
+                                            <div class="db-tiny">{tb.total}</div>
+                                            <div class="db-trend-bar" style={tb.barStyle}></div>
+                                            <div class="db-tiny">{tb.label}</div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </template>
+        <template lwc:elseif={isSix}>
+            <div class="db-top">
+                <div>
+                    <div class="db-title">6Sense Dashboard</div>
+                    <div class="db-sub">6sense Conversational Email (CE) on Leads and Contacts: enrolled by CE In Progress Time, split by CE Status. Live from Salesforce, {sixAsOf}.</div>
+                </div>
+                <div class="db-controls">
+                    <template for:each={sixObjs} for:item="ob">
+                        <button key={ob.key} class={ob.cls} data-key={ob.key} onclick={handleSixObj}>{ob.label}</button>
+                    </template>
+                </div>
+            </div>
+            <template lwc:if={loading}>
+                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+            </template>
+            <template lwc:if={error}>
+                <div class="db-error">Could not load the 6Sense dashboard: {error}</div>
+            </template>
+            <template lwc:if={sixError}>
+                <div class="db-error">{sixError}</div>
+            </template>
+            <template lwc:if={hasSix}>
+                <div class="db-kpis db-kpis-6">
+                    <template for:each={sixKpis} for:item="k">
+                        <div key={k.key} class="db-card">
+                            <div class="db-card-title">{k.label}</div>
+                            <div class={k.cls}>{k.value}</div>
+                            <div class="db-small">{k.sub}</div>
+                        </div>
+                    </template>
+                </div>
+                <div class="db-two-six">
+                    <div class="db-card">
+                        <div class="db-card-title">Enrolled by week (last 8 weeks) · by CE Status</div>
+                        <div class="db-trend db-trend-six">
+                            <template for:each={sixWeeks} for:item="w">
+                                <div key={w.key} class="db-trend-col">
+                                    <div class="db-tiny">{w.total}</div>
+                                    <div class="db-trend-bar" style={w.barStyle} title={w.tip}></div>
+                                    <div class="db-tiny">{w.label}</div>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="db-legend">
+                            <template for:each={sixLegend} for:item="lg">
+                                <span key={lg.key} class="db-legend-item"><span class="db-swatch" style={lg.swatch}></span>{lg.label}</span>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="db-card">
+                        <div class="db-card-title">Top campaigns · last 60 days</div>
+                        <template for:each={sixCampaigns} for:item="cp">
+                            <div key={cp.key} class="db-camp">
+                                <div class="db-camp-line"><span class="db-camp-name" title={cp.name}>{cp.name}</span><strong>{cp.n}</strong></div>
+                                <div class="db-camp-track"><div style={cp.fillStyle}></div></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <div class="db-card">
+                    <div class="db-card-title">Needs a person · last 14 days, by Project Coordinator</div>
+                    <div class="db-table db-table-5">
+                        <div class="db-th">Project Coordinator</div>
+                        <div class="db-th">Human Review · Leads</div>
+                        <div class="db-th">Human Review · Contacts</div>
+                        <div class="db-th">Qualified · Leads</div>
+                        <div class="db-th">Qualified · Contacts</div>
+                        <template for:each={sixReview} for:item="rv">
+                            <div key={rv.key} class="db-tr">
+                                <div class="db-cell">{rv.name}</div>
+                                <div class="db-cell db-strong">{rv.hrLeads}</div>
+                                <div class="db-cell db-strong">{rv.hrContacts}</div>
+                                <div class="db-cell db-green">{rv.qLeads}</div>
+                                <div class="db-cell db-green">{rv.qContacts}</div>
+                            </div>
+                        </template>
+                    </div>
+                    <template lwc:if={sixReviewEmpty}>
+                        <div class="db-small db-foot">No Human Review or Qualified outcomes in the last 14 days.</div>
+                    </template>
+                    <div class="db-small db-foot">Human Review = 6sense flagged a reply for a person to handle. Qualified = 6sense marked the prospect qualified.</div>
+                </div>
+            </template>
+        </template>
+        <template lwc:else>
+        <div class="db-top">
+            <div>
+                <div class="db-title">LDR Dashboard</div>
+                <div class="db-sub">Worked leads = Leads by Project Coordinator and Lead Funnel Time Stamp. Opportunities = created by the LDR. Live from Salesforce, {asOf}.</div>
+            </div>
+            <div class="db-controls">
+                <template for:each={periods} for:item="p">
+                    <button key={p.key} class={p.cls} data-key={p.key} onclick={handlePeriod}>{p.label}</button>
+                </template>
+                <select class="db-select" onchange={handlePc} aria-label="Project Coordinator">
+                    <template for:each={pcOptions} for:item="o">
+                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                    </template>
+                </select>
+            </div>
+        </div>
+        <template lwc:if={loading}>
+            <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+        </template>
+        <template lwc:if={error}>
+            <div class="db-error">Could not load the dashboard: {error}</div>
+        </template>
+        <template lwc:if={hasData}>
+            <div class="db-kpis">
+                <template for:each={kpis} for:item="k">
+                    <div key={k.key} class="db-card">
+                        <div class="db-card-title">{k.label}</div>
+                        <div class={k.cls}>{k.value}</div>
+                        <div class="db-small">{k.sub}</div>
+                    </div>
+                </template>
+            </div>
+            <div class="db-two">
+                <div class="db-card">
+                    <div class="db-card-title">Worked leads · {periodLabel} · by Project Coordinator and Lead Status</div>
+                    <template for:each={leadBars} for:item="b">
+                        <div key={b.key} class="db-bar-row">
+                            <div class="db-bar-name">{b.name}</div>
+                            <div class="db-bar-track"><div class="db-bar-fill" style={b.fillStyle}></div></div>
+                            <div class="db-bar-total">{b.total}</div>
+                        </div>
+                    </template>
+                    <div class="db-legend">
+                        <template for:each={statusLegend} for:item="lg">
+                            <span key={lg.key} class="db-legend-item"><span class="db-swatch" style={lg.swatch}></span>{lg.label}</span>
+                        </template>
+                    </div>
+                </div>
+                <div class="db-card">
+                    <div class="db-card-title">Opportunities created · {periodLabel} · by LDR</div>
+                    <div class="db-donut-row">
+                        <div class="db-donut" style={donutStyle}>
+                            <div class="db-donut-hole"><div class="db-donut-n">{oppTotal}</div><div class="db-small">opps</div></div>
+                        </div>
+                        <div class="db-opp-list">
+                            <template for:each={oppList} for:item="ol">
+                                <div key={ol.key} class="db-opp-item"><span class="db-swatch" style={ol.swatch}></span>{ol.name}<strong class="db-opp-n">{ol.n}</strong></div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="db-two-even">
+                <template for:each={trends} for:item="tr">
+                    <div key={tr.key} class="db-card">
+                        <div class="db-card-title">{tr.title}</div>
+                        <div class="db-trend">
+                            <template for:each={tr.bars} for:item="tb">
+                                <div key={tb.key} class="db-trend-col">
+                                    <div class="db-tiny">{tb.total}</div>
+                                    <div class="db-trend-bar" style={tb.barStyle} title={tb.tip}></div>
+                                    <div class="db-tiny">{tb.label}</div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div class="db-legend db-legend-wide">
+                <template for:each={ldrLegend} for:item="lg">
+                    <span key={lg.key} class="db-legend-item"><span class="db-swatch" style={lg.swatch}></span>{lg.label}</span>
+                </template>
+            </div>
+            <div class="db-card db-gap">
+                <div class="db-card-head">
+                    <div class="db-card-title">Speed · claim, first outreach, qualify</div>
+                    <div class="db-small">{speedNote}</div>
+                </div>
+                <div class="db-mini-grid">
+                    <template for:each={speedKpis} for:item="tk">
+                        <div key={tk.key} class="db-mini">
+                            <div class="db-small">{tk.label}</div>
+                            <div class={tk.cls}>{tk.value}</div>
+                            <div class="db-tiny">{tk.sub}</div>
+                        </div>
+                    </template>
+                </div>
+                <div class="db-table db-table-7">
+                    <div class="db-th">LDR</div>
+                    <div class="db-th">Claimed</div>
+                    <div class="db-th">Same day</div>
+                    <div class="db-th">Next business day</div>
+                    <div class="db-th">Weekend → Monday</div>
+                    <div class="db-th">Avg first outreach</div>
+                    <div class="db-th">Avg to Qualified / converted</div>
+                    <template for:each={speedRows} for:item="sr">
+                        <div key={sr.key} class="db-tr">
+                            <div class="db-cell">{sr.name}</div>
+                            <div class="db-cell">{sr.claimed}</div>
+                            <div class="db-cell db-green db-strong">{sr.sameDay}</div>
+                            <div class="db-cell">{sr.nextBd}</div>
+                            <div class="db-cell">{sr.weekend}</div>
+                            <div class="db-cell">{sr.firstOut}</div>
+                            <div class="db-cell">{sr.toQual}</div>
+                        </div>
+                    </template>
+                </div>
+                <div class="db-small db-foot">Form Submissions claimed since go-live (Pacific days, by Claimed Date). First outreach = the claimer's first Task on the Lead / Contact after the submission. Qualified = Lead / Contact status history, or Lead conversion.</div>
+            </div>
+            <div class="db-card">
+                <div class="db-card-title">From the inbox (what the inbox has loaded: last 30 days plus current claims)</div>
+                <div class="db-table db-table-6">
+                    <div class="db-th">LDR</div>
+                    <div class="db-th">Claimed, working</div>
+                    <div class="db-th">Finished (7 days)</div>
+                    <div class="db-th">No-outreach flags</div>
+                    <div class="db-th">Coordinator on unclaimed</div>
+                    <div class="db-th">Outbound claimed</div>
+                    <template for:each={inboxRows} for:item="ir">
+                        <div key={ir.key} class="db-tr">
+                            <div class="db-cell">{ir.name}</div>
+                            <div class="db-cell">{ir.working}</div>
+                            <div class="db-cell">{ir.finished}</div>
+                            <div class={ir.noOutCls}>{ir.noOut}</div>
+                            <div class="db-cell">{ir.unclaimedCoord}</div>
+                            <div class="db-cell">{ir.outbound}</div>
+                        </div>
+                    </template>
+                </div>
+                <div class="db-small db-foot">Unclaimed right now:&nbsp;<strong class="db-red">{inboxData.unclaimedNow}</strong>&nbsp;· oldest waiting {inboxData.oldestWaiting}</div>
+            </div>
+        </template>
+        </template>
+    </div>
+</template>

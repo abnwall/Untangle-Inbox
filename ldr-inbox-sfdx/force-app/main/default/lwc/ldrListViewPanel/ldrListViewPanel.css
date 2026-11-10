@@ -1,0 +1,34 @@
+/* Lead Views panel (canvas #110 / #112): white box, grey border, coloured top edge (teal list view, purple report). */
+:host { display: block; min-width: 0; font-family: var(--sans, 'Source Sans 3', Arial, sans-serif); color: #292929; }
+.lvp { background: #fff; border: 1px solid #D8D8D8; border-top: 3px solid #00798F; display: flex; flex-direction: column; min-width: 0; height: 420px; }
+.lvp-report { border-top-color: #7C5BA6; }
+.lvp-head { padding: 12px 14px 8px; border-bottom: 1px solid #EBEBEB; }
+.lvp-head-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.lvp-min0 { min-width: 0; }
+.lvp-kind-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.lvp-kind { font-size: 11px; font-weight: 600; padding: 2px 8px; color: #fff; white-space: nowrap; }
+.lvp-kind-list { background: #00798F; }
+.lvp-kind-report { background: #7C5BA6; }
+.lvp-count { font-size: 11px; color: #707070; }
+.lvp-title { font-size: 14px; font-weight: 600; color: #292929; }
+.lvp-open { flex-shrink: 0; font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 5px 10px; background: #fff; color: #00798F; border: 1.5px solid #00798F; border-radius: 0; white-space: nowrap; cursor: pointer; }
+.lvp-filters { font-size: 11px; color: #707070; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lvp-tools { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.lvp-search { flex: 0 1 260px; min-width: 0; padding: 5px 8px; border: 1px solid #707070; border-radius: 0; font-size: 12.5px; font-family: inherit; }
+.lvp-hint { font-size: 11px; color: #707070; }
+.lvp-saved { margin-left: auto; font-size: 11px; font-weight: 600; color: #194D19; }
+.lvp-more { margin-left: auto; font-family: inherit; font-size: 11px; font-weight: 600; padding: 3px 10px; background: #fff; color: #00798F; border: 1.5px solid #00798F; border-radius: 0; cursor: pointer; white-space: nowrap; }
+.lvp-table { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.lvp-note { padding: 14px; font-size: 12.5px; color: #707070; }
+.lvp-error { color: #C8102E; }
+/* Change Status (canvas 41be, #115B) */
+.lvp-head-btns { flex-shrink: 0; display: flex; gap: 6px; align-items: center; }
+.lvp-open:disabled { color: #707070; border-color: #D8D8D8; cursor: not-allowed; }
+.lvp-status-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; padding: 8px 10px; background: #F0F8E8; border: 1px solid #C4E2A2; }
+.lvp-status-label { font-size: 12.5px; font-weight: 600; color: #292929; }
+.lvp-select { padding: 4px 6px; border: 1px solid #707070; border-radius: 0; font-size: 12.5px; font-family: inherit; }
+/* Lead Funnel Outcome prompt for Wrong profile / Disqualified (shown, not enforced) */
+.lvp-required { font-size: 11px; color: #C8102E; }
+.lvp-text-btn { font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 4px 0; background: transparent; border: none; color: #707070; cursor: pointer; }
+.lvp-save-btn { font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 4px 10px; background: #fff; color: #4A6D22; border: 1.5px solid #4A6D22; border-radius: 0; cursor: pointer; }
+.lvp-save-btn:disabled { color: #9EA2A2; border-color: #9EA2A2; cursor: not-allowed; }

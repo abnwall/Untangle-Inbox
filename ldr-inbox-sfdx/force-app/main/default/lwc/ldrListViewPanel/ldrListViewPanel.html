@@ -1,0 +1,98 @@
+<template>
+    <div class={panelCls}>
+        <div class="lvp-head">
+            <div class="lvp-head-top">
+                <div class="lvp-min0">
+                    <div class="lvp-kind-row">
+                        <span class={tagCls}>{kindLabel}</span>
+                        <span class="lvp-count">{panelCount}</span>
+                    </div>
+                    <div class="lvp-title">{title}</div>
+                </div>
+                <div class="lvp-head-btns">
+                    <template lwc:if={hasTable}>
+                        <button class="lvp-open lvp-status-btn" onclick={openStatus} disabled={statusOff} title={statusTitle}>Change Status</button>
+                    </template>
+                    <!-- #116: no Import to Outreach here; the standard list view opened below gets the Outreach extension's own button -->
+                    <button class="lvp-open" onclick={openFull} title="Open the full view (filters, list view controls, charts) as a console tab">Open Full View ↗</button>
+                </div>
+            </div>
+            <template lwc:if={hasFilters}>
+                <div class="lvp-filters" title={filtersText}>Filters: {filtersText}</div>
+            </template>
+            <template lwc:if={hasTable}>
+                <div class="lvp-tools">
+                    <input class="lvp-search" type="search" placeholder="Search this list…" value={search} oninput={handleSearch} aria-label="Search this list">
+                    <span class="lvp-hint">{editHint}</span>
+                    <template lwc:if={showSavedMsg}><span class="lvp-saved">{savedMsg}</span></template>
+                    <template lwc:if={canLoadMore}><button class="lvp-more" onclick={loadMore}>Load more</button></template>
+                </div>
+            </template>
+            <template lwc:if={showStatusBar}>
+                <div class="lvp-status-bar">
+                    <span class="lvp-status-label">{statusCountLabel}</span>
+                    <select class="lvp-select" aria-label="Lead Status" onchange={handleNewStatus}>
+                        <template for:each={statusOptions} for:item="o">
+                            <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                        </template>
+                    </select>
+                    <template lwc:if={showOutcome}>
+                        <select class="lvp-select" aria-label="Lead Funnel Outcome" onchange={handleNewOutcome}>
+                            <template for:each={outcomeOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                        <span class="lvp-required">{outcomeFlagText}</span>
+                    </template>
+                    <button class="lvp-text-btn" onclick={cancelStatus}>Cancel</button>
+                    <button class="lvp-save-btn" onclick={saveStatus} disabled={statusSaveOff}>Save</button>
+                </div>
+            </template>
+            <template lwc:if={hasReportTable}>
+                <div class="lvp-tools">
+                    <input class="lvp-search" type="search" placeholder="Search this report…" value={search} oninput={handleSearch} aria-label="Search this report">
+                    <button class="lvp-more" onclick={loadReport} disabled={reportLoading}>↻ Run again</button>
+                </div>
+            </template>
+        </div>
+
+        <!-- LIST VIEW -->
+        <template lwc:if={isListView}>
+            <template lwc:if={listError}>
+                <div class="lvp-note lvp-error">Couldn't load this list view: {listError}. It may be private to its owner; share it, or open the full view.</div>
+            </template>
+            <template lwc:if={recordsError}>
+                <div class="lvp-note lvp-error">Couldn't load the rows: {recordsError}</div>
+            </template>
+            <template lwc:if={isEmpty}>
+                <div class="lvp-note">No leads match this view right now.</div>
+            </template>
+            <template lwc:if={hasTable}>
+                <div class="lvp-table">
+                    <lightning-datatable key-field="id" data={rows} columns={columns} draft-values={draftValues} errors={errors} selected-rows={selectedIds}
+                        sorted-by={sortedBy} sorted-direction={sortedDirection} onsort={handleSort}
+                        onrowselection={handleRowSelection} oncellchange={handleCellChange} onsave={handleSave}
+                        oncancel={handleCancel} onrowaction={handleRowAction} is-loading={loadingRecords} suppress-bottom-bar={saving}></lightning-datatable>
+                </div>
+            </template>
+        </template>
+
+        <!-- REPORT -->
+        <template lwc:if={isReport}>
+            <template lwc:if={reportLoading}>
+                <div class="lvp-note">Running the report…</div>
+            </template>
+            <template lwc:if={reportError}>
+                <div class="lvp-note lvp-error">Couldn't run this report: {reportError}. It may be in a private folder; move it to a shared folder, or open the full view.</div>
+            </template>
+            <template lwc:if={reportEmpty}>
+                <div class="lvp-note">The report has no rows right now.</div>
+            </template>
+            <template lwc:if={hasReportTable}>
+                <div class="lvp-table">
+                    <lightning-datatable key-field="id" data={reportRows} columns={reportColumns} hide-checkbox-column></lightning-datatable>
+                </div>
+            </template>
+        </template>
+    </div>
+</template>

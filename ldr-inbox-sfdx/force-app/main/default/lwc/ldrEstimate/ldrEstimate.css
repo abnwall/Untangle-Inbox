@@ -1,0 +1,51 @@
+/* Estimate tab (canvas #101): the inbox's look. --sans / --serif are inherited from c-ldr-inbox. */
+:host { display: block; flex: 1 1 auto; min-height: 0; overflow-y: auto; font-family: var(--sans, 'Source Sans 3', Arial, sans-serif); color: #292929; }
+.est-page { padding: 20px 28px; }
+.est-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+.est-title { font-family: var(--serif, 'Source Serif 4', Georgia, serif); font-size: 24px; color: #292929; }
+.est-sub, .est-hint { font-size: 12.5px; color: #707070; }
+.est-hint { font-size: 11px; }
+.est-layout { display: grid; grid-template-columns: minmax(0, 430px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.est-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.est-card { background: #fff; border: 1px solid #D8D8D8; border-radius: 0; padding: 16px; }
+.est-card-title { font-size: 12.5px; font-weight: 600; color: #292929; letter-spacing: 0.2px; margin-bottom: 12px; }
+.est-label { font-size: 11px; color: #707070; margin-bottom: 6px; }
+.est-frames { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.est-frame { display: flex; align-items: center; gap: 12px; padding: 6px 10px 6px 6px; background: #fff; border: 1.5px solid #D8D8D8; border-radius: 0; cursor: pointer; text-align: left; font-family: inherit; }
+.est-frame-on { background: #F0F8E8; border-color: #4A6D22; }
+.est-frame-img { width: 64px; height: 42px; object-fit: cover; display: block; flex-shrink: 0; }
+.est-frame-label { font-size: 14px; font-weight: 600; color: #3D3D3D; }
+.est-frame-on .est-frame-label { color: #194D19; }
+.est-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.est-btns-last { margin-bottom: 0; }
+.est-btn { font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 0; white-space: nowrap; cursor: pointer; background: #fff; color: #00798F; border: 1.5px solid #00798F; }
+.est-btn-on { background: #00798F; color: #fff; }
+.est-result { border-left: 3px solid #D8D8D8; }
+.est-result-priced { border-left-color: #4A6D22; }
+.est-result-custom { border-left-color: #E8A33D; }
+.est-result-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.est-min0 { min-width: 0; }
+.est-price { font-family: var(--serif, 'Source Serif 4', Georgia, serif); font-size: 30px; color: #194D19; line-height: 1.15; }
+.est-price-empty { color: #9EA2A2; }
+.est-usd { font-family: var(--sans, 'Source Sans 3', Arial, sans-serif); font-size: 14px; color: #707070; margin-left: 6px; }
+.est-summary { font-size: 14px; color: #3D3D3D; margin-top: 6px; }
+.est-copy { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; max-width: 260px; }
+.est-copy-btn { font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 0; white-space: nowrap; cursor: pointer; background: #fff; color: #00798F; border: 1.5px solid #00798F; }
+.est-copied { font-size: 11px; font-weight: 600; color: #194D19; }
+.est-copy-failed { font-size: 11px; color: #C8102E; text-align: right; }
+.est-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.est-tag { font-size: 11px; font-weight: 600; padding: 2px 8px; background: #F5F5F5; color: #3D3D3D; }
+.est-note { font-size: 11px; color: #707070; margin-top: 10px; }
+.est-grid-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.est-grid-head .est-card-title { margin-bottom: 0; }
+.est-grid-wrap { overflow-x: auto; }
+.est-grid { border-collapse: collapse; width: 100%; }
+.est-th { font-size: 11px; font-weight: 600; color: #707070; padding: 6px 8px; border-bottom: 1px solid #D8D8D8; white-space: nowrap; }
+.est-th-corner { text-align: left; }
+.est-th-on { color: #00798F; }
+.est-td-w { font-size: 12.5px; font-weight: 600; color: #292929; padding: 6px 8px; white-space: nowrap; border: 1px solid #EBEBEB; background: #FAFAFA; }
+.est-td-w-on { color: #00798F; }
+.est-td { padding: 0; border: 1px solid #EBEBEB; }
+.est-cell { width: 100%; padding: 8px 6px; border: none; border-radius: 0; background: #fff; color: #3D3D3D; font-family: inherit; font-size: 12.5px; font-weight: 400; cursor: pointer; white-space: nowrap; }
+.est-cell-on { background: #00798F; color: #fff; font-weight: 600; }
+.est-copy-src { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }

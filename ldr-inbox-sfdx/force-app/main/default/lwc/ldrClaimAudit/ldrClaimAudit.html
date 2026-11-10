@@ -1,0 +1,155 @@
+<template>
+    <div class="ca-wrap">
+        <div class="ca-title">Claim Audit</div>
+        <div class="ca-sub">{subtitle}</div>
+        <template lwc:if={loading}>
+            <lightning-spinner alternative-text="Loading the claim audit" size="small"></lightning-spinner>
+        </template>
+        <template lwc:if={error}>
+            <div class="ca-error">Could not load the claim audit: {error}</div>
+        </template>
+        <template lwc:if={hasData}>
+            <!-- BY CLAIMER -->
+            <div class="ca-box">
+                <div class="ca-head">By Claimer</div>
+                <div class="ca-text">"Within 24h" = the claimer's first email on the linked Lead / Contact went out no more than 24 hours after the claim (or before it). "Late" = more than 24 hours after. "No email" = no outbound email from the claimer since the form came in. "Still inside 24h" = claimed less than a day ago, no email yet. Claims without a linked Lead / Contact aren't checked.</div>
+                <div class="ca-legend">
+                    <span><i class="ca-swatch ca-sw-ok"></i>Within 24h</span>
+                    <span><i class="ca-swatch ca-sw-pending"></i>Still inside 24h</span>
+                    <span><i class="ca-swatch ca-sw-late"></i>Late (&gt;24h)</span>
+                    <span><i class="ca-swatch ca-sw-none"></i>No email</span>
+                </div>
+                <div class="ca-scroll-x">
+                    <table class="ca-table">
+                        <thead>
+                            <tr>
+                                <th>Claimer</th>
+                                <th class="ca-num">Claimed</th>
+                                <th class="ca-num">Claims checked</th>
+                                <th class="ca-num">Within 24h</th>
+                                <th class="ca-num">Still inside 24h</th>
+                                <th class="ca-num">Late</th>
+                                <th class="ca-num">No email</th>
+                                <th class="ca-num">No Lead / Contact</th>
+                                <th class="ca-wide">Late or none</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={claimers} for:item="c">
+                                <tr key={c.key} class={c.rowCls}>
+                                    <td>{c.claimer}</td>
+                                    <td class="ca-num">{c.claimed}</td>
+                                    <td class="ca-num">{c.checked}</td>
+                                    <td class="ca-num">{c.ok}</td>
+                                    <td class="ca-num">{c.pending}</td>
+                                    <td class="ca-num">{c.late}</td>
+                                    <td class="ca-num">{c.none}</td>
+                                    <td class="ca-num">{c.nolink}</td>
+                                    <td class="ca-wide">
+                                        <span class={c.rateCls}>{c.rateLabel}</span>
+                                        <div class="ca-bar">
+                                            <template for:each={c.segs} for:item="s">
+                                                <span key={s.key} class="ca-seg" style={s.style}></span>
+                                            </template>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- FLAGGED RECORDS -->
+            <div class="ca-box">
+                <div class="ca-head">Flagged Records</div>
+                <div class="ca-text">Every claimed form or instant estimate with no email from the claimer, or a first email more than 24 hours after the claim. Project coordinator, Lead status and Lead funnel outcome are the current values on the Lead or Contact (for Contacts, Lead status is Lead Funnel Status). Form record type is what the person was when the submission came in; Lead / contact links to their current record; Opportunity is the Contact's most recent opportunity created no earlier than 30 days before the submission. "Claim time exact = No" means the claim was made before the claim time was recorded (Oct 29, 2026), so only its day is known: it counts from midnight Pacific.</div>
+                <div class="ca-filters">
+                    <input class="ca-input ca-search" type="text" placeholder="Search name, email, subject…" aria-label="Search flagged records"
+                        value={q} data-f="q" oninput={handleFilter} />
+                    <select class="ca-input ca-w180" aria-label="Claimer" data-f="claimer" onchange={handleFilter}>
+                        <template for:each={claimerOptions} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                    </select>
+                    <select class="ca-input ca-w150" aria-label="Status" data-f="status" onchange={handleFilter}>
+                        <template for:each={statusOptions} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                    </select>
+                    <select class="ca-input ca-w160" aria-label="Leads or contacts" data-f="rtype" onchange={handleFilter}>
+                        <template for:each={rtypeOptions} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                    </select>
+                    <select class="ca-input ca-w170" aria-label="Lead status" data-f="lstatus" onchange={handleFilter}>
+                        <template for:each={lstatusOptions} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                    </select>
+                    <select class="ca-input ca-w160" aria-label="Converted" data-f="conv" onchange={handleFilter}>
+                        <template for:each={convOptions} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                    </select>
+                    <template lwc:if={hasFilters}>
+                        <button class="ca-clear" onclick={clearFilters}>Clear Filters</button>
+                    </template>
+                </div>
+                <div class="ca-count">{countLabel}</div>
+                <template lwc:if={noRows}>
+                    <div class="ca-empty">No flagged records match these filters.</div>
+                </template>
+                <div class="ca-table-box">
+                    <table class="ca-table ca-flag-table">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Claimer</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Type</th>
+                                <th>Submitted</th>
+                                <th>Claimed</th>
+                                <th>First email</th>
+                                <th class="ca-num">Hours</th>
+                                <th>Claim time exact</th>
+                                <th>Project coordinator</th>
+                                <th>Lead status</th>
+                                <th>Lead funnel outcome</th>
+                                <th>Emailed by someone else</th>
+                                <th>Record</th>
+                                <th>Form record type</th>
+                                <th>Lead / contact</th>
+                                <th>Converted</th>
+                                <th class="ca-wide">Opportunity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={rows} for:item="r">
+                                <tr key={r.key}>
+                                    <td><span class={r.statusCls}>{r.status}</span></td>
+                                    <td class="ca-nowrap">{r.claimer}</td>
+                                    <td class="ca-nowrap ca-strong">{r.name}</td>
+                                    <td class="ca-wrap-any">{r.email}</td>
+                                    <td class="ca-nowrap">{r.type}</td>
+                                    <td class="ca-nowrap">{r.submitted}</td>
+                                    <td class="ca-nowrap">{r.claimed}</td>
+                                    <td class="ca-nowrap" title={r.firstEmailTitle}>{r.firstEmail}</td>
+                                    <td class="ca-num">{r.hours}</td>
+                                    <td class="ca-nowrap">{r.exact}</td>
+                                    <td class="ca-nowrap">{r.coordinator}</td>
+                                    <td class="ca-nowrap">{r.leadStatus}</td>
+                                    <td class="ca-nowrap">{r.outcome}</td>
+                                    <td class="ca-nowrap">{r.otherEmail}</td>
+                                    <td><a class="ca-link" href={r.recordUrl} target="_blank" rel="noopener">Open ↗</a></td>
+                                    <td>{r.formRecordType}</td>
+                                    <td>
+                                        <template lwc:if={r.hasPerson}><a class="ca-link" href={r.personUrl} target="_blank" rel="noopener">{r.personType}</a></template>
+                                        <template lwc:else>{r.personType}</template>
+                                    </td>
+                                    <td class="ca-nowrap">{r.converted}</td>
+                                    <td class="ca-wide">
+                                        <template lwc:if={r.hasOpp}><a class="ca-link" href={r.oppUrl} target="_blank" rel="noopener">{r.oppName}</a></template>
+                                        <template lwc:else>—</template>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="ca-foot">Claim time = the submission's Claimed Date (date and time; earlier claims: that day at midnight Pacific). Emails = Tasks owned by the claimer whose subject starts "[Outreach] [Email] [Out]" (Jahmanz's log as "Email: …"), on the linked Lead / Contact or the Contact it converted to, after the form came in. Calls don't count. Aziz's test entries are left out.</div>
+            </div>
+        </template>
+    </div>
+</template>

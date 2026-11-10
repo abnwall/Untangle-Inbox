@@ -1,0 +1,93 @@
+<template>
+    <div class="est-page">
+        <div class="est-head">
+            <div class="est-title">Estimate</div>
+            <div class="est-sub">Rough price range for a standard NanaWall opening</div>
+        </div>
+        <div class="est-layout">
+            <!-- Opening: frame type, width, height (canvas #101) -->
+            <div class="est-card">
+                <div class="est-card-title">Opening</div>
+                <div class="est-label">Frame type</div>
+                <div class="est-frames">
+                    <template for:each={frames} for:item="f">
+                        <button key={f.key} class={f.cls} data-key={f.key} onclick={pickFrame}>
+                            <img src={f.img} alt="" class="est-frame-img">
+                            <span class="est-frame-label">{f.label}</span>
+                        </button>
+                    </template>
+                </div>
+                <div class="est-label">Width</div>
+                <div class="est-btns">
+                    <template for:each={widthButtons} for:item="b">
+                        <button key={b.key} class={b.cls} data-key={b.key} onclick={pickWidth}>{b.label}</button>
+                    </template>
+                </div>
+                <div class="est-label">Height</div>
+                <div class="est-btns est-btns-last">
+                    <template for:each={heightButtons} for:item="b">
+                        <button key={b.key} class={b.cls} data-key={b.key} onclick={pickHeight}>{b.label}</button>
+                    </template>
+                </div>
+            </div>
+            <div class="est-right">
+                <!-- Estimated cost -->
+                <div class={resultCls}>
+                    <div class="est-result-top">
+                        <div class="est-min0">
+                            <div class="est-label">Estimated cost</div>
+                            <div class={priceCls}>{priceBig}<template lwc:if={hasPrice}><span class="est-usd">USD ††</span></template></div>
+                            <div class="est-summary">{summary}</div>
+                        </div>
+                        <template lwc:if={hasPrice}>
+                            <div class="est-copy">
+                                <button class="est-copy-btn" onclick={copyForEmail} title="Copy a sentence with this estimate for an email">Copy for Email</button>
+                                <template lwc:if={copied}><span class="est-copied">✓ Copied</span></template>
+                                <template lwc:if={copyFailed}><span class="est-copy-failed">Couldn't copy: {sentence}</span></template>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="est-tags">
+                        <span class="est-tag">Inward or outward opening</span>
+                        <span class="est-tag">50 standard powder coat colors</span>
+                        <span class="est-tag">Swing door + multi-point locking</span>
+                        <span class="est-tag">Double-glazed low-E glass or similar</span>
+                    </div>
+                    <div class="est-note">†† Pricing subject to change without notice. Excluding tax, freight, installation, and customization to meet your project requirements.</div>
+                </div>
+                <!-- All sizes for the selected frame; click a price to select it -->
+                <div class="est-card">
+                    <div class="est-grid-head">
+                        <div class="est-card-title">All sizes · {frame}</div>
+                        <div class="est-hint">Click a price to select it. Over 18' wide, under 7' or over 9' tall = Custom.</div>
+                    </div>
+                    <div class="est-grid-wrap">
+                        <table class="est-grid">
+                            <thead>
+                                <tr>
+                                    <th class="est-th est-th-corner">Width \ Height</th>
+                                    <template for:each={gridHeads} for:item="gh">
+                                        <th key={gh.key} class={gh.cls}>{gh.label}</th>
+                                    </template>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={grid} for:item="gr">
+                                    <tr key={gr.key}>
+                                        <td class={gr.widthCls}>{gr.width}</td>
+                                        <template for:each={gr.cells} for:item="c">
+                                            <td key={c.key} class="est-td">
+                                                <button class={c.cls} data-width={c.width} data-height={c.height} title={c.title} onclick={pickCell}>{c.text}</button>
+                                            </td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <textarea class="est-copy-src" readonly tabindex="-1" aria-hidden="true"></textarea>
+    </div>
+</template>

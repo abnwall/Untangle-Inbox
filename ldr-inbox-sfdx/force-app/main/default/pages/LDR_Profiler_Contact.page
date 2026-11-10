@@ -1,0 +1,7 @@
+<!-- Eloqua Profiler for the LDR Inbox. Same as Profiler_Contact, but the iframe is sized to fill the inbox's
+     900px frame (apex:iframe defaults to 600px, which cut the Profiler off). -->
+<apex:page standardController="Contact" showHeader="false" sidebar="false" standardStylesheets="false">
+    <style>html, body { margin: 0; padding: 0; overflow: hidden; }</style>
+    <apex:iframe scrolling="true" height="896px" width="100%" frameborder="false"
+        src="https://login.eloqua.com/apps/embed/salesTools/profiler?emailAddress={!URLENCODE(contact.Email)}"/>
+</apex:page>

@@ -1,0 +1,14 @@
+<template>
+    <div class="lv-page">
+        <div class="lv-head">
+            <div class="lv-title">Lead Views</div>
+            <div class="lv-sub">Saved list views and reports: search, sort and edit cells here, or open the full view for filters and list view controls.</div>
+        </div>
+        <div class="lv-grid">
+            <template for:each={views} for:item="v">
+                <c-ldr-list-view-panel key={v.key} kind={v.kind} title={v.title}
+                    list-view-api-name={v.listViewApiName} report-id={v.reportId}></c-ldr-list-view-panel>
+            </template>
+        </div>
+    </div>
+</template>

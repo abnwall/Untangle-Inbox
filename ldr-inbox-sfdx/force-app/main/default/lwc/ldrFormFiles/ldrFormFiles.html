@@ -1,0 +1,31 @@
+<template>
+    <!-- The form submission's files (links on the upload host, not Salesforce Files): Download on the left of each file,
+         then previews like the record page's attachments (image thumbnail; PDF / other tiles). Click a preview to open it. -->
+    <template lwc:if={hasFiles}>
+        <div class="ff-note">{note}</div>
+        <template for:each={files} for:item="f">
+            <div key={f.key} class="ff-file">
+                <a class="ff-dl" href={f.url} download={f.name} target="_blank" rel="noopener noreferrer" title="Download">
+                    <lightning-icon icon-name="utility:download" size="xx-small" alternative-text="Download"></lightning-icon>Download</a>
+                <span class="ff-kind">{f.kind}</span>
+                <a class="ff-name" href={f.url} target="_blank" rel="noopener noreferrer">{f.name}</a>
+            </div>
+        </template>
+        <div class="ff-previews">
+            <template for:each={files} for:item="f">
+                <a key={f.key} class="ff-prev" href={f.url} target="_blank" rel="noopener noreferrer" title={f.name}>
+                    <template lwc:if={f.isImage}>
+                        <img class="ff-thumb" src={f.url} alt={f.label} loading="lazy"/>
+                    </template>
+                    <template lwc:elseif={f.isPdf}>
+                        <span class="ff-tile ff-pdf"><span class="ff-pdf-big">PDF</span><span class="ff-pdf-sub">Click to open</span></span>
+                    </template>
+                    <template lwc:else>
+                        <span class="ff-tile ff-other">{f.kind}</span>
+                    </template>
+                    <span class="ff-prev-name">{f.label}</span>
+                </a>
+            </template>
+        </div>
+    </template>
+</template>

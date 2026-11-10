@@ -1,0 +1,241 @@
+<template>
+    <div class="ss-body">
+        <!-- LIST (canvas #151 C-F): Mine / Unassigned, Record · Type · CE Lead Status, Status · Date, CE Lead Status groups -->
+        <div class="ss-queue">
+            <div class="ss-box-row">
+                <template for:each={boxes} for:item="b">
+                    <button key={b.key} class={b.cls} data-key={b.key} title={b.title} onclick={pickBox}>{b.label}&nbsp;<span class="ss-box-count">{b.count}</span></button>
+                </template>
+            </div>
+            <div class="ss-blurb">Replies to 6sense emails (Rina and Emily campaigns) since Sep 1 that came in after the Lead Funnel Time Stamp. One card per person.</div>
+            <div class="ss-filter-row">
+                <select class="ss-filter" aria-label="Lead or Contact" title="Lead or Contact" onchange={handleRecordFilter}>
+                    <template for:each={options.record} for:item="o">
+                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                    </template>
+                </select>
+                <select class="ss-filter" aria-label="Type" title="Lead Type" onchange={handleTypeFilter}>
+                    <template for:each={options.type} for:item="o">
+                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                    </template>
+                </select>
+                <select class="ss-filter" aria-label="CE Lead Status" title="CE Lead Status (6sense)" onchange={handleCeFilter}>
+                    <template for:each={options.ce} for:item="o">
+                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                    </template>
+                </select>
+            </div>
+            <div class="ss-filter-row ss-filter-row-last">
+                <select class="ss-filter" aria-label="Status" title="Lead Status" onchange={handleStatusFilter}>
+                    <template for:each={options.status} for:item="o">
+                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                    </template>
+                </select>
+                <button class="ss-sort-btn" onclick={toggleSortOrder} title={sortTitle} aria-label={sortTitle}>Date&nbsp;<span class="ss-sort-arrow">{sortArrow}</span></button>
+            </div>
+            <template lwc:if={loading}>
+                <lightning-spinner alternative-text="Loading 6Sense replies" size="small"></lightning-spinner>
+            </template>
+            <template lwc:if={loadError}>
+                <div class="ss-error">{loadError}</div>
+            </template>
+            <template lwc:if={capped}>
+                <div class="ss-note">{cappedText}</div>
+            </template>
+            <template lwc:if={listEmpty}>
+                <div class="ss-empty">{listEmptyText}</div>
+            </template>
+            <template for:each={items} for:item="x">
+                <div key={x.key}>
+                    <template lwc:if={x.isHeader}>
+                        <div class={x.cls}>{x.label}&nbsp;<span class="ss-group-count">· {x.count}</span></div>
+                    </template>
+                    <template lwc:elseif={x.isCard}>
+                        <button class={x.cardCls} style={x.cardStyle} data-card={x.leadId} onclick={handleCard}>
+                            <div class="ss-card-top">
+                                <span class="ss-card-name"><c-ldr-type-icon type={x.customerType} title={x.customerType} class="ss-type-icon"></c-ldr-type-icon>{x.name}</span>
+                                <span class="ss-age">{x.ageLabel}</span>
+                            </div>
+                            <div class="ss-card-line">
+                                <span class="ss-tag ss-tag-6s">6Sense</span>
+                                <template lwc:if={x.typeIsText}>
+                                    <span class="ss-type-text">Unknown</span>
+                                </template>
+                                <template lwc:if={x.hasTypeTag}>
+                                    <span class="ss-tag ss-tag-type" style={x.typeStyle}>{x.customerType}</span>
+                                </template>
+                            </div>
+                            <div class="ss-card-line">
+                                <span class="ss-tag" style={x.ceStyle} title="CE Lead Status">{x.ceLabel}</span>
+                                <span class="ss-tag ss-tag-plain" title="Lead Status">{x.statusLabel}</span>
+                                <template lwc:if={x.hasSender}>
+                                    <span class="ss-tag ss-tag-plain" title={x.campaign}>{x.sender}</span>
+                                </template>
+                            </div>
+                            <div class="ss-card-subject">{x.subject}</div>
+                            <div class="ss-card-preview">{x.preview}</div>
+                            <div class="ss-card-bottom"><span class={x.coordCls}>{x.coordLabel}</span></div>
+                            <template lwc:if={x.hasMore}>
+                                <div class="ss-group-foot"><span class="ss-group-pill">{x.moreLabel}</span></div>
+                            </template>
+                        </button>
+                    </template>
+                    <template lwc:elseif={x.isChild}>
+                        <!-- an earlier reply from the same person; opens their page -->
+                        <button class="ss-child" data-lead={x.leadId} onclick={handleChild}>
+                            <div class="ss-card-top">
+                                <span class="ss-tag ss-tag-6s">Email</span>
+                                <span class="ss-age">{x.childDate}</span>
+                            </div>
+                            <div class="ss-child-subject">{x.childSubject}</div>
+                            <div class="ss-child-preview">{x.childPreview}</div>
+                        </button>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <!-- PAGE (canvas #151 G, #152 K, #157 A, #158): buttons float right; [icon][name + tags] row; then three info lines that
+             start at the icon's left edge, all in line 1's plain style. Right side: line 1 Current Tab, line 3 the status
+             buttons (no "Go to" on this page: the list is always on the 6Sense tab here). -->
+        <div class="ss-detail">
+            <template lwc:if={hasActive}>
+                <div class="ss-head">
+                    <div class="ss-actions-float">
+                        <button class="ss-btn" onclick={openLead}>Lead ↗</button>
+                        <template lwc:if={d.telHref}>
+                            <a class="ss-btn" href={d.telHref}>Call</a>
+                        </template>
+                        <template lwc:if={d.mailHref}>
+                            <a class="ss-btn" href={d.mailHref}>Draft Email</a>
+                        </template>
+                    </div>
+                    <div class="ss-name-row">
+                        <lightning-icon icon-name="standard:lead" size="medium" alternative-text="Lead" class="ss-record-icon"></lightning-icon>
+                        <div class="ss-name-line">
+                            <span class="ss-title">{d.name}</span>
+                            <span class="ss-tag ss-tag-6s">6Sense</span>
+                            <span class="ss-type-pill" style={d.typeStyle} title={d.customerType}><c-ldr-type-icon type={d.customerType}></c-ldr-type-icon>{d.customerType}</span>
+                            <span class="ss-tag ss-tag-ce" style={d.ceStyle} title="CE Lead Status">{d.ceLabel}</span>
+                        </div>
+                    </div>
+                    <!-- line 1 (v6d: left half, beside the buttons' second row; Current Tab moved to line 2) -->
+                    <div class="ss-line ss-line-gap ss-line1">
+                        Replied {d.repliedAt} · {d.email} · {d.phone}
+                    </div>
+                    <!-- line 2: Current Tab on the right -->
+                    <div class="ss-line ss-line-gap ss-line2">
+                        <span class="ss-line-right ss-current-tab">Current Tab: <strong>{d.currentTab}</strong></span>
+                        <strong class="ss-ink">{d.company}</strong> · {d.location} · Rep:&nbsp;<strong class="ss-ink">{d.owner}</strong>
+                    </div>
+                </div>
+
+                <!-- v5.6b: the alerts sit above the status-button line, as on the inbox and Post Quote pages (#161) -->
+                <!-- v5.7: each alert closes with × (for this person, while the page is open) -->
+                <template lwc:if={showSsAlerts}>
+                    <div class="ss-alerts">
+                        <template lwc:if={showOffAlert}>
+                            <div class="ss-banner-ok ss-dismissable" role="status">✓ {d.offLine}
+                                <button class="ss-dismiss" data-key="off" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button></div>
+                        </template>
+                        <template lwc:if={showNoCoordAlert}>
+                            <div class="ss-banner-warn ss-dismissable">⚠ This Lead has no Project Coordinator, so it shows under Unassigned for every LDR.
+                                <button class="ss-dismiss" data-key="noCoord" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button></div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- line 3: status buttons on the right, right above the boxes -->
+                <div class="ss-line ss-statusbar">
+                    <div class="ss-line-right ss-status-btns">
+                        <template for:each={d.statusBtns} for:item="sb">
+                            <button key={sb.label} class={sb.cls} data-status={sb.label} title={sb.title} aria-pressed={sb.pressed} onclick={handleStatus} disabled={busy}>{sb.label}</button>
+                        </template>
+                    </div>
+                    Project Coordinator:&nbsp;<strong class={d.coordCls}>{d.coordinator}</strong>
+                </div>
+
+                <div class="ss-grid">
+                    <div class="ss-col">
+                        <div class="ss-panel">
+                            <div class="ss-panel-head">
+                                <div class="ss-panel-title">Their Reply</div>
+                                <template lwc:if={d.emailHref}>
+                                    <a class="ss-link-small" href={d.emailHref} target="_blank" rel="noopener">Full Email in Salesforce ↗</a>
+                                </template>
+                            </div>
+                            <div class="ss-reply-meta">{d.repliedAt} · {d.subject}</div>
+                            <div class="ss-reply">{d.reply}</div>
+                        </div>
+                        <div class="ss-panel">
+                            <div class="ss-panel-title ss-panel-title-gap">Earlier Replies from {d.firstName}</div>
+                            <template lwc:if={d.noOthers}>
+                                <div class="ss-muted">No earlier replies in this list.</div>
+                            </template>
+                            <template for:each={d.others} for:item="o">
+                                <div key={o.key} class="ss-other">
+                                    <div class="ss-panel-head ss-other-head">
+                                        <div class="ss-reply-meta ss-reply-meta-tight">{o.at} · {o.subject}</div>
+                                        <a class="ss-link-small" href={o.href} target="_blank" rel="noopener">Open ↗</a>
+                                    </div>
+                                    <div class="ss-reply ss-reply-other">{o.reply}</div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="ss-col">
+                        <div class="ss-panel">
+                            <div class="ss-panel-title ss-panel-title-gap">LDR Fields</div>
+                            <div class="ss-field">
+                                <span class="ss-label">Lead Status</span>
+                                <span class="ss-value">{d.statusLabel}</span>
+                            </div>
+                            <template lwc:if={d.showOutcome}>
+                                <label class="ss-field">
+                                    <span class="ss-label">Lead Funnel Outcome *</span>
+                                    <select class="ss-select" onchange={handleOutcome} disabled={busy}>
+                                        <template for:each={d.outcomeOptions} for:item="oo">
+                                            <option key={oo.value} value={oo.value} selected={oo.selected}>{oo.label}</option>
+                                        </template>
+                                    </select>
+                                    <template lwc:if={d.outcomeMissing}>
+                                        <span class="ss-prompt">Required when Status is Disqualified.</span>
+                                    </template>
+                                </label>
+                            </template>
+                            <div class="ss-field">
+                                <span class="ss-label">Lead Funnel Time Stamp</span>
+                                <span class="ss-value">{d.funnelTs}</span>
+                            </div>
+                            <div class="ss-field ss-field-last">
+                                <span class="ss-label">Project Coordinator</span>
+                                <span class={d.coordCls}>{d.coordinator}</span>
+                            </div>
+                            <div class="ss-hint">The status buttons in the header set Lead Status and Lead Funnel Time Stamp = today, which takes this person off the 6Sense list until they reply again. Click the filled button again to undo.</div>
+                        </div>
+                        <div class="ss-panel">
+                            <div class="ss-panel-title ss-panel-title-gap">6sense</div>
+                            <div class="ss-field">
+                                <span class="ss-label">CE Lead Status</span>
+                                <span class="ss-value"><span class="ss-tag" style={d.ceStyle}>{d.ceLabel}</span>&nbsp;<span class="ss-since">{d.ceSince}</span></span>
+                            </div>
+                            <div class="ss-field">
+                                <span class="ss-label">CE Campaign Name</span>
+                                <span class="ss-value ss-wrap">{d.campaign}</span>
+                            </div>
+                            <div class="ss-field">
+                                <span class="ss-label">CE Campaign Status</span>
+                                <span class="ss-value">{d.campaignStatus}</span>
+                            </div>
+                            <div class="ss-field ss-field-last">
+                                <span class="ss-label">Lead Source</span>
+                                <span class="ss-value">{d.source}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</template>

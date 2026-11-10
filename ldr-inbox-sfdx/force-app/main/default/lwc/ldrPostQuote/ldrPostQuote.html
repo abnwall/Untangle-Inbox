@@ -1,0 +1,239 @@
+<template>
+    <div class="pq-copy-host" lwc:dom="manual"></div>
+    <template lwc:if={hasRow}>
+        <div class="pq-detail">
+            <!-- HEADER (canvas #139 / #157 / #158 / #159): buttons float right; [icon][name] row; then two info lines that start
+                 at the icon's left edge. Right side: line 1 Current Tab, line 2 Go to (other tab only). #161: then the banners,
+                 then the Action taken line on its own, right above the boxes. Lines use line 1's plain style (12.5px #707070);
+                 tags: Post Quote on line 1, customer type on line 2, Residential / Commercial on the Action taken line before
+                 the applications (text) and the Split Territory flag. -->
+            <div class="pq-head">
+                <div class="pq-actions-float">
+                    <a class="pq-btn pq-btn-teal" href={d.contactHref} target="_blank" rel="noopener">Contact ↗</a>
+                    <template lwc:if={d.hasOpp}>
+                        <a class="pq-btn pq-btn-teal" href={d.oppHref} target="_blank" rel="noopener">Opportunity ↗</a>
+                    </template>
+                    <template lwc:if={d.telHref}>
+                        <a class="pq-btn pq-btn-teal" href={d.telHref}>Call</a>
+                    </template>
+                    <template lwc:if={d.mailHref}>
+                        <a class="pq-btn pq-btn-teal" href={d.mailHref}>Draft Email</a>
+                    </template>
+                </div>
+                <div class="pq-name-row">
+                    <lightning-icon icon-name="standard:contact" size="medium" alternative-text="Contact" class="pq-record-icon"></lightning-icon>
+                    <div class="pq-name-line">
+                        <span class="pq-title">{d.name}</span>
+                    </div>
+                </div>
+                <!-- line 1: [Post Quote] Replied … (v6d: left half, beside the buttons' second row; Current Tab moved to line 2) -->
+                <div class="pq-line pq-line-gap pq-line1">
+                    <span class="pq-tag pq-tag-pq">Post Quote</span>Replied {d.repliedAt} · {d.email} · {d.phone}
+                </div>
+                <!-- line 2: [customer type] account · location · Rep; on the right Current Tab, then "· Go to <Tab>" when the
+                     list is on another tab -->
+                <div class="pq-line pq-line-gap pq-line2">
+                    <span class="pq-line-right pq-current-tab">Current Tab: <strong>{d.currentTab}</strong><template lwc:if={d.showGoTab}>&nbsp;·&nbsp;<button class="pq-go-tab" onclick={goToTab} title="Switch the list to the tab this reply is in">{d.goTabLabel}</button></template></span>
+                    <span class={d.typePillCls} title={d.customerType}><c-ldr-type-icon type={d.customerType}></c-ldr-type-icon>{d.customerType}</span>
+                    <template lwc:if={d.accountHref}>
+                        <a class="pq-link" href={d.accountHref} target="_blank" rel="noopener">{d.accountName}</a>
+                    </template>
+                    <template lwc:else><strong class="pq-strong-ink">{d.accountName}</strong></template>
+                    <span>&nbsp;· {d.location} · Rep:&nbsp;</span><strong class="pq-strong-ink">{d.rep}</strong>
+                </div>
+            </div>
+
+            <template lwc:if={showAlerts}>
+                <div class="pq-alerts">
+                    <!-- v5.7: each alert closes with × (for this reply, until another reply is opened) -->
+                    <template lwc:if={showNoCoordAlert}>
+                        <div class="pq-warn pq-dismissable">⚠ This contact has no Project Coordinator, so this reply isn't routed to anyone's Post Quote list.
+                            <button class="pq-dismiss" data-key="noCoord" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button></div>
+                    </template>
+                    <template lwc:if={showDoneAlert}>
+                        <div class="pq-done-banner pq-dismissable">✓ {d.doneLine}
+                            <button class="pq-dismiss" data-key="done" onclick={dismissAlert} aria-label="Dismiss this alert" title="Dismiss">×</button></div>
+                    </template>
+                    <!-- v5.6b: was under the Action taken line, which pushed the boxes down -->
+                    <template lwc:if={message}>
+                        <div class="pq-message pq-dismissable" role="status">{message}
+                            <button class="pq-dismiss" data-key="message" onclick={dismissAlert} aria-label="Dismiss this message" title="Dismiss">×</button></div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- #161 Action taken line: [Residential / Commercial] General Application (bold) · Specific Application [Split
+                 Territory] on the left, Action taken on the right; its own line right above the boxes -->
+            <div class="pq-statusbar">
+                <div class="pq-line">
+                    <div class="pq-line-right pq-action-taken">
+                        <span class="pq-actionbar-label">Action taken:</span>
+                        <template for:each={d.doneBtns} for:item="b">
+                            <button key={b.tag} class={b.cls} data-tag={b.tag} data-on={b.on} title={b.title} aria-pressed={b.pressed} onclick={markDone} disabled={busy}>{b.label}</button>
+                        </template>
+                    </div>
+                    <template lwc:if={d.segKind}>
+                        <span class="pq-tag pq-tag-kind">{d.segKind}</span>
+                    </template>
+                    <template lwc:if={d.hasGeneralApp}>
+                        <strong class="pq-strong-ink" title="Project General Application">{d.generalApp}</strong>
+                    </template>
+                    <template lwc:if={d.hasSpecificApp}>
+                        <span title="Project Specific Application">{d.specSep}{d.specificApp}</span>
+                    </template>
+                    <template lwc:if={d.isSplit}>
+                        <span class="pq-tag pq-tag-split" title="Opportunity owner and Project owner are different">{d.splitLabel}</span>
+                    </template>
+                </div>
+            </div>
+
+            <!-- PAGE IN THIRDS (canvas #140): reply column | Project + Opportunity, FJTR below (#152 J: Action taken is in
+                 the header now) -->
+            <div class="pq-thirds">
+                <div class="pq-left">
+                    <div class="pq-card">
+                        <div class="pq-card-head">
+                            <div class="pq-card-title">Comments</div>
+                            <template lwc:if={d.emailHref}>
+                                <a class="pq-link-green" href={d.emailHref} target="_blank" rel="noopener">Full Email in Salesforce ↗</a>
+                            </template>
+                        </div>
+                        <div class="pq-comments">{d.comments}</div>
+                    </div>
+                    <div class="pq-card">
+                        <div class="pq-card-title">Other emails from {d.firstName} on this project</div>
+                        <template lwc:if={d.noOthers}>
+                            <div class="pq-muted">No other replies on this project.</div>
+                        </template>
+                        <template for:each={d.others} for:item="o">
+                            <div key={o.key} class="pq-other">
+                                <div class="pq-card-head">
+                                    <div class="pq-small pq-muted">{o.at} · {o.subject}</div>
+                                    <a class="pq-link-green" href={o.href} target="_blank" rel="noopener">Open ↗</a>
+                                </div>
+                                <div class="pq-comments">{o.reply}</div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="pq-card pq-box-proj">
+                    <div class="pq-card-title">Project Details</div>
+                    <!-- #157 C: "Project Name: <link>" on one line; General Application removed (it's in the header) -->
+                    <div class="pq-inline-row pq-inline-row-gap">
+                        <span class="pq-muted">Project Name:&nbsp;</span>
+                        <template lwc:if={d.hasProject}>
+                            <a class="pq-link" href={d.projectHref} target="_blank" rel="noopener">{d.projectName}</a>
+                        </template>
+                        <template lwc:else>
+                            <span>{d.projectName}&nbsp;<span class="pq-small pq-muted">(no matching Project found through the Contact's opportunities)</span></span>
+                        </template>
+                    </div>
+                    <label class="pq-field">
+                        <span class="pq-label">Stage</span>
+                        <select class="pq-select" onchange={setProjStage} disabled={d.noProject}>
+                            <template for:each={d.projStageOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                    </label>
+                    <template lwc:if={d.reasonOn}>
+                        <label class="pq-field">
+                            <span class="pq-label">Reason Project Lost</span>
+                            <select class="pq-select" onchange={setReason} disabled={d.noProject}>
+                                <template for:each={d.reasonOptions} for:item="o">
+                                    <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                </template>
+                            </select>
+                        </label>
+                    </template>
+                    <template lwc:if={d.lostToOn}>
+                        <label class="pq-field">
+                            <span class="pq-label">Lost To</span>
+                            <select class="pq-select" onchange={setLostTo} disabled={d.noProject}>
+                                <template for:each={d.lostToOptions} for:item="o">
+                                    <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                </template>
+                            </select>
+                        </label>
+                    </template>
+                    <div class="pq-field">
+                        <span class="pq-label">Stage Detail</span>
+                        <lightning-textarea class="pq-ltext" label="Project Stage Detail" variant="label-hidden" max-length="1000" value={d.projStageDetail} onchange={setProjDetail} disabled={d.noProject}></lightning-textarea>
+                    </div>
+                    <div class="pq-inline-row pq-inline-row-lm"><span class="pq-muted">Last Modified By:&nbsp;</span>{d.projLastMod}</div>
+                    <div class="pq-save-row">
+                        <template lwc:if={projDirty}><span class="pq-unsaved">Unsaved changes</span></template>
+                        <button class="pq-btn pq-btn-cancel" onclick={cancelProj} disabled={projClean}>Cancel</button>
+                        <button class="pq-btn pq-btn-save" onclick={saveProj} disabled={projClean}>Save</button>
+                    </div>
+                </div>
+
+                <div class="pq-card pq-box-opp">
+                    <div class="pq-card-title">Opportunity Details</div>
+                    <div class="pq-inline-row pq-inline-row-gap">
+                        <span class="pq-muted">Opportunity Name:&nbsp;</span>
+                        <template lwc:if={d.hasOpp}>
+                            <a class="pq-link" href={d.oppHref} target="_blank" rel="noopener">{d.oppName}</a>
+                        </template>
+                        <template lwc:else><span class="pq-muted">No opportunity found for this project</span></template>
+                    </div>
+                    <label class="pq-field">
+                        <span class="pq-label">Opportunity Stage</span>
+                        <select class="pq-select" onchange={setOppStage} disabled={d.noOpp}>
+                            <template for:each={d.oppStageOptions} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                    </label>
+                    <div class="pq-field">
+                        <span class="pq-label">Stage Detail</span>
+                        <lightning-textarea class="pq-ltext" label="Opportunity Stage Detail" variant="label-hidden" max-length="1000" value={d.oppStageDetail} onchange={setOppDetail} disabled={d.noOpp}></lightning-textarea>
+                    </div>
+                    <div class="pq-inline-row pq-inline-row-lm"><span class="pq-muted">Last Modified By:&nbsp;</span>{d.oppLastMod}</div>
+                    <div class="pq-save-row">
+                        <template lwc:if={oppDirty}><span class="pq-unsaved">Unsaved changes</span></template>
+                        <button class="pq-btn pq-btn-cancel" onclick={cancelOpp} disabled={oppClean}>Cancel</button>
+                        <button class="pq-btn pq-btn-save" onclick={saveOpp} disabled={oppClean}>Save</button>
+                    </div>
+                </div>
+
+                <div class="pq-card pq-box-fjtr">
+                    <div class="pq-fjtr-head">
+                        <div class="pq-card-title pq-nowrap">FJTR · rep email</div>
+                        <div class="pq-fjtr-btns">
+                            <template lwc:if={d.fjtrEdited}>
+                                <button class="pq-btn pq-btn-small" onclick={resetFjtr} title="Put the Salesforce values and their latest reply back">Reset</button>
+                            </template>
+                            <button class="pq-btn pq-btn-teal pq-btn-small" onclick={copyFjtrSubject}>Copy Subject</button>
+                            <button class="pq-btn pq-btn-teal pq-btn-small" onclick={copyFjtr}>Copy FJTR</button>
+                        </div>
+                    </div>
+                    <!-- v6f8: the subject and every value can be typed over before copying; ↗ opens a linked one -->
+                    <div class="pq-fjtr-subject"><span class="pq-muted">Subject:</span>
+                        <input class="pq-fjtr-in" type="text" data-id="subject" value={d.fjtrSubject} oninput={setFjtrField} aria-label="FJTR subject">
+                    </div>
+                    <div class="pq-fjtr">
+                        <template for:each={d.fjtrRows} for:item="r">
+                            <div key={r.key} class={r.cls}>
+                                <template lwc:if={r.isHeader}>
+                                    {r.k}<template lwc:if={r.hasAccent}><span class="pq-fjtr-accent">{r.accent}</span></template>
+                                </template>
+                                <template lwc:else>
+                                    <strong class="pq-fjtr-k">{r.k}:</strong>
+                                    <input class={r.inCls} type="text" data-id={r.id} value={r.v} oninput={setFjtrField} aria-label={r.k}>
+                                    <template lwc:if={r.hasHref}><a class="pq-fjtr-open" href={r.href} target="_blank" rel="noopener" title="Open">↗</a></template>
+                                </template>
+                            </div>
+                        </template>
+                        <div class="pq-fjtr-edit">
+                            <strong>Questions/Comments/Concerns</strong>:
+                            <textarea class="pq-fjtr-text" rows="4" aria-label="Questions/Comments/Concerns for the FJTR" placeholder="[Insert details here]" data-text={fjtrValue} oninput={setFjtrText}></textarea>
+                        </div>
+                    </div>
+                    <div class="pq-fjtr-note">Same layout as the team's FJTR email. Questions/Comments/Concerns starts as their latest reply. The subject and every value can be edited before copying (only for this email; nothing is saved to Salesforce). "Copy FJTR" copies it with the links, ready to paste into Outlook.</div>
+                </div>
+            </div>
+        </div>
+    </template>
+</template>
